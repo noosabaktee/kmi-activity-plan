@@ -69,13 +69,6 @@
                 </div>
 
                 <div>
-                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Kode Project (Opsional)</label>
-                    <input type="text" name="txtProjectCode" value="{{ old('txtProjectCode') }}"
-                        class="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-sm focus:border-[#006838] focus:ring-2 focus:ring-[#006838]/20 outline-none"
-                        placeholder="PRJ-2026-001">
-                </div>
-
-                <div>
                     <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Tipe Project <span class="text-red-500">*</span></label>
                     <select name="intProjectType_ID" required class="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-sm focus:border-[#006838] outline-none">
                         @foreach ($projectTypes as $pt)

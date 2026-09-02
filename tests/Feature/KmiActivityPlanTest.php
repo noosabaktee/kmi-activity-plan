@@ -241,16 +241,19 @@ test('it only displays projects belonging to the employee in daily plan activity
     $response->assertDontSee('Exclusive Project For Emp 2');
 });
 
-test('it renders monthly report matrix with KPI weights and scores', function () {
+test('it renders monthly report progress dashboard with interactive charts and tracker', function () {
     $user = MUser::where('txtRole', 'Head')->first();
 
     $response = $this->withSession(['auth_user_id' => $user->intUser_ID])
         ->get(route('reports.monthly-report'));
 
     $response->assertStatus(200);
-    $response->assertSee('Matriks Objective KPI');
-    $response->assertSee('Objective Weight');
-    $response->assertSee('Target Skala Grade');
+    $response->assertSee('Laporan Perkembangan & Progress', false);
+    $response->assertSee('projectProgressChart');
+    $response->assertSee('projectStatusChart');
+    $response->assertSee('dailyTrendChart');
+    $response->assertSee('subDeptProgressChart');
+    $response->assertSee('Tabel Ringkasan Perkembangan Project');
 });
 
 test('it loads supervisedSubDepartments relationship without query exception', function () {
@@ -315,4 +318,65 @@ test('it displays comprehensive employee profile summary with exposure, projects
     $response->assertSee('Log Daily Tasks Terakhir');
     $response->assertSee('Rencana Kerja Mingguan');
     $response->assertSee('profileExposureChart');
+});
+
+test('it creates a project without project code and auto-generates sequential code', function () {
+    $user = MUser::where('txtRole', 'Head')->first();
+    $subDept = MSubDepartment::first();
+    $type = MProjectType::first();
+
+    $response = $this->withSession(['auth_user_id' => $user->intUser_ID])
+        ->post(route('projects.store'), [
+            'bitHasSubProject' => '0',
+            'txtProjectName' => 'Project Auto Code Generation Test',
+            'intProjectType_ID' => $type->intProjectType_ID,
+            'intSubDepartment_ID' => $subDept->intSubDepartment_ID,
+            'intUser_ID' => $user->intUser_ID,
+            'txtKpiLevel' => 'Department',
+            'floatWeight' => 20,
+        ]);
+
+    $response->assertRedirect(route('projects.index'));
+
+    $project = MProject::where('txtProjectName', 'Project Auto Code Generation Test')->first();
+    expect($project)->not->toBeNull();
+    expect($project->txtProjectCode)->toStartWith('PRJ-' . date('Y'));
+});
+
+test('it manages WA scheduler with day select, two-tier target, and API settings update', function () {
+    $superadmin = MUser::where('txtRole', 'Superadmin')->first() ?: MUser::where('txtRole', 'Head')->first();
+    $dept = MDepartment::first();
+
+    // 1. Test update WA API settings
+    $settingsResponse = $this->withSession(['auth_user_id' => $superadmin->intUser_ID])
+        ->post(route('wa-scheduler.settings.update'), [
+            'wa_api_url' => 'https://whatsapp.intconnect.id/send-message',
+            'wa_api_key' => 'test_api_key_123456',
+            'wa_sender' => '628999888777',
+            'wa_footer' => 'Sent from KMI Activity Plan Test',
+        ]);
+
+    $settingsResponse->assertRedirect(route('wa-scheduler.index'));
+    $this->assertEquals('test_api_key_123456', \App\Models\MSetting::get('wa_api_key'));
+    $this->assertEquals('628999888777', \App\Models\MSetting::get('wa_sender'));
+
+    // 2. Test create WA schedule with day name & department & role target
+    $schedResponse = $this->withSession(['auth_user_id' => $superadmin->intUser_ID])
+        ->post(route('wa-scheduler.store'), [
+            'txtScheduleTitle' => 'Pengingat Jumat Sore Test',
+            'txtCronDay' => 'Jumat',
+            'txtScheduledTime' => '16:00',
+            'intDepartment_ID' => $dept->intDepartment_ID,
+            'txtTargetRecipient' => 'Employee',
+            'txtMessageTemplate' => 'Halo {employee_name}, selamat sore!',
+        ]);
+
+    $schedResponse->assertRedirect(route('wa-scheduler.index'));
+
+    $this->assertDatabaseHas('mWaSchedule', [
+        'txtScheduleTitle' => 'Pengingat Jumat Sore Test',
+        'txtCronDay' => 'Jumat',
+        'txtTargetRole' => 'Employee',
+        'intDepartment_ID' => $dept->intDepartment_ID,
+    ]);
 });

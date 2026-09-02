@@ -73,6 +73,7 @@ Route::middleware('kmi.auth')->group(function () {
     Route::prefix('wa-scheduler')->name('wa-scheduler.')->middleware('kmi.access:wa-scheduler')->group(function () {
         Route::get('/', [WaSchedulerController::class, 'index'])->name('index');
         Route::post('/', [WaSchedulerController::class, 'store'])->name('store');
+        Route::post('settings', [WaSchedulerController::class, 'updateSettings'])->name('settings.update');
         Route::post('{schedule}/trigger', [WaSchedulerController::class, 'trigger'])->name('trigger');
         Route::post('test-send', [WaSchedulerController::class, 'testSend'])->name('test-send');
         Route::delete('{schedule}', [WaSchedulerController::class, 'destroy'])->name('destroy');

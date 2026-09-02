@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Models\Concerns\GeneratesIntegerIds;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class MWaSchedule extends Model
 {
@@ -19,12 +20,17 @@ class MWaSchedule extends Model
     protected $fillable = [
         'intWaSchedule_ID',
         'txtScheduleTitle',
+        'txtCronDay',
         'txtCronExpression',
         'txtScheduledTime',
         'txtMessageTemplate',
+        'txtFooterText',
+        'txtTargetType',
+        'intDepartment_ID',
+        'intSubDepartment_ID',
+        'intUser_ID',
         'txtTargetRole',
-        'bitIsActive',
-        'dtmLastExecuted',
+        'dtmLastSentAt',
         'bitActive',
         'txtInsertedBy',
         'dtmInserted',
@@ -36,12 +42,29 @@ class MWaSchedule extends Model
     {
         return [
             'intWaSchedule_ID' => 'integer',
-            'bitIsActive' => 'boolean',
+            'intDepartment_ID' => 'integer',
+            'intSubDepartment_ID' => 'integer',
+            'intUser_ID' => 'integer',
             'bitActive' => 'boolean',
-            'dtmLastExecuted' => 'datetime',
+            'dtmLastSentAt' => 'datetime',
             'dtmInserted' => 'datetime',
             'dtmUpdated' => 'datetime',
         ];
+    }
+
+    public function department(): BelongsTo
+    {
+        return $this->belongsTo(MDepartment::class, 'intDepartment_ID', 'intDepartment_ID');
+    }
+
+    public function subDepartment(): BelongsTo
+    {
+        return $this->belongsTo(MSubDepartment::class, 'intSubDepartment_ID', 'intSubDepartment_ID');
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(MUser::class, 'intUser_ID', 'intUser_ID');
     }
 
     public function scopeActive(Builder $query): Builder

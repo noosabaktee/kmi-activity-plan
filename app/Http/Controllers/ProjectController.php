@@ -132,7 +132,7 @@ class ProjectController extends Controller
                 'intSubDepartment_ID' => $validated['intSubDepartment_ID'] ?? $authUser->intSubDepartment_ID,
                 'intProjectType_ID' => $validated['intProjectType_ID'],
                 'intUser_ID' => $validated['intUser_ID'],
-                'txtProjectCode' => $validated['txtProjectCode'] ?? ('PRJ-' . date('Y') . '-' . rand(100, 999)),
+                'txtProjectCode' => !empty($validated['txtProjectCode']) ? $validated['txtProjectCode'] : ('PRJ-' . date('Y') . '-' . str_pad((MProject::max('intProject_ID') ?? 0) + 1, 3, '0', STR_PAD_LEFT)),
                 'txtProjectName' => $validated['txtProjectName'],
                 'txtKpiLevel' => $validated['txtKpiLevel'],
                 'txtDeliverable' => $validated['txtDeliverable'] ?? null,
