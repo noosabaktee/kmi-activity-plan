@@ -1,0 +1,378 @@
+@import "tailwindcss";
+
+@layer base {
+    * {
+        box-sizing: border-box;
+    }
+}
+
+/* Custom scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 9999px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+/* ==========================================================================
+   Handsontable Modern Light Demo Theme (Matching Official Demo)
+   ========================================================================== */
+.handsontable-container-card {
+    border-radius: 1.25rem;
+    box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    overflow: hidden;
+}
+
+.handsontable {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
+    font-size: 13px !important;
+    color: #1e293b !important;
+    background-color: #ffffff !important;
+}
+
+.handsontable table.htCore {
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+    background-color: #ffffff !important;
+}
+
+/* Column Headers */
+.handsontable th {
+    background: #f8fafc !important;
+    color: #475569 !important;
+    font-weight: 700 !important;
+    font-size: 11px !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.05em !important;
+    border-top: none !important;
+    border-left: none !important;
+    border-right: 1px solid #e2e8f0 !important;
+    border-bottom: 2px solid #e2e8f0 !important;
+    padding: 10px 12px !important;
+    vertical-align: middle !important;
+    text-align: left !important;
+    white-space: nowrap !important;
+}
+
+/* Row Headers (Numbers on the left) */
+.handsontable th.ht__highlight,
+.handsontable th:first-child {
+    background: #f8fafc !important;
+    color: #64748b !important;
+    font-weight: 600 !important;
+    font-size: 11px !important;
+    text-align: center !important;
+    border-right: 2px solid #e2e8f0 !important;
+}
+
+/* Cells */
+.handsontable td {
+    background-color: #ffffff !important;
+    color: #334155 !important;
+    font-size: 12.5px !important;
+    border-top: none !important;
+    border-left: none !important;
+    border-right: 1px solid #f1f5f9 !important;
+    border-bottom: 1px solid #f1f5f9 !important;
+    padding: 8px 12px !important;
+    vertical-align: middle !important;
+    line-height: 1.4 !important;
+    transition: background-color 0.15s ease !important;
+}
+
+/* Hover Row Effect */
+.handsontable tr:hover td {
+    background-color: #f0fdf4 !important;
+}
+
+/* Selected Cells & Selection Area */
+.handsontable .current,
+.handsontable .area {
+    background-color: rgba(0, 104, 56, 0.08) !important;
+}
+
+.handsontable .htBorder {
+    background-color: #006838 !important;
+}
+
+.handsontable .htBorder.current {
+    box-shadow: 0 0 0 1px #006838 !important;
+}
+
+/* Autocomplete Arrow */
+.handsontable .htAutocompleteArrow {
+    color: #006838 !important;
+    margin-right: 6px !important;
+    font-size: 11px !important;
+}
+
+/* --- Status Pill Badges --- */
+.ht-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 10px;
+    border-radius: 9999px;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1.2;
+    text-transform: capitalize;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+}
+
+.ht-status-completed {
+    background-color: #dcfce7;
+    color: #15803d;
+    border: 1px solid #bbf7d0;
+}
+
+.ht-status-inprogress {
+    background-color: #e0f2fe;
+    color: #0369a1;
+    border: 1px solid #bae6fd;
+}
+
+.ht-status-pending {
+    background-color: #fef3c7;
+    color: #b45309;
+    border: 1px solid #fde68a;
+}
+
+.ht-status-issue {
+    background-color: #fee2e2;
+    color: #b91c1c;
+    border: 1px solid #fecaca;
+}
+
+/* --- Performance / Progress Bar --- */
+.ht-progress-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    height: 100%;
+    padding: 2px 0;
+}
+
+.ht-progress-track {
+    flex: 1;
+    height: 7px;
+    background-color: #e2e8f0;
+    border-radius: 9999px;
+    overflow: hidden;
+    position: relative;
+}
+
+.ht-progress-fill {
+    height: 100%;
+    border-radius: 9999px;
+    transition: width 0.3s ease;
+}
+
+.ht-progress-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: #475569;
+    min-width: 34px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+/* --- Duration Badge --- */
+.ht-duration-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #334155;
+}
+
+/* --- Date Badge --- */
+.ht-date-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11.5px;
+    font-weight: 500;
+    color: #475569;
+}
+
+/* --- Context Menu & Dropdown Popup --- */
+.htContextMenu,
+.htDropdownMenu {
+    background-color: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 14px !important;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
+    padding: 6px !important;
+    z-index: 100 !important;
+}
+
+.htContextMenu table.htCore td,
+.htDropdownMenu table.htCore td {
+    background-color: #ffffff !important;
+    color: #334155 !important;
+    font-size: 12px !important;
+    font-weight: 500 !important;
+    padding: 7px 14px !important;
+    border: none !important;
+}
+
+.htContextMenu table.htCore td.current,
+.htDropdownMenu table.htCore td.current {
+    background-color: #f0fdf4 !important;
+    color: #006838 !important;
+    font-weight: 700 !important;
+    border-radius: 8px !important;
+}
+
+.handsontable .htAutocompleteHolder {
+    background-color: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 10px !important;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1) !important;
+    overflow: hidden !important;
+}
+
+.handsontable .htAutocompleteHolder td {
+    background-color: #ffffff !important;
+    color: #334155 !important;
+    padding: 6px 12px !important;
+}
+
+.handsontable .htAutocompleteHolder td.current {
+    background-color: #f0fdf4 !important;
+    color: #006838 !important;
+    font-weight: 700 !important;
+}
+
+/* Modal and transition animations */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scaleIn {
+    from { opacity: 0; transform: scale(0.96); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+.animate-fade-in {
+    animation: fadeIn 0.2s ease-out forwards;
+}
+
+.animate-scale-in {
+    animation: scaleIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Modal styles */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(2px);
+    z-index: 50;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+
+.modal-overlay.active {
+    display: flex;
+}
+
+.modal-container {
+    background: #ffffff;
+    border-radius: 1.5rem;
+    max-width: 28rem;
+    width: 100%;
+    padding: 1.5rem;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    border: 1px solid #f1f5f9;
+}
+
+.modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.modal-title-copy h3 {
+    font-size: 1rem;
+    font-weight: 800;
+    color: #1e293b;
+    margin: 0;
+}
+
+.modal-title-copy p {
+    font-size: 0.75rem;
+    color: #64748b;
+    margin: 0;
+    margin-top: 0.25rem;
+}
+
+.btn-close {
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    cursor: pointer;
+    font-size: 1rem;
+    padding: 0.25rem;
+}
+
+.modal-body {
+    padding: 1rem 0;
+}
+
+.modal-confirm-copy {
+    font-size: 0.875rem;
+    color: #334155;
+    line-height: 1.5;
+}
+
+.modal-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid #f1f5f9;
+}
+
+.btn-cancel {
+    padding: 0.5rem 1rem;
+    border-radius: 0.75rem;
+    background: #f1f5f9;
+    color: #475569;
+    font-weight: 600;
+    font-size: 0.75rem;
+    border: none;
+    cursor: pointer;
+}
+
+.btn-danger-action {
+    padding: 0.5rem 1.25rem;
+    border-radius: 0.75rem;
+    background: #ef4444;
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 0.75rem;
+    border: none;
+    cursor: pointer;
+}
