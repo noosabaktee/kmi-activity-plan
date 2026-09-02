@@ -42,8 +42,28 @@ class DailyTaskController extends Controller
 
         $tasks = $query->get();
 
-        $employees = MUser::active()->where('txtRole', 'Employee')->orderBy('txtEmployeeName')->get();
-        $projects = MProject::with('subProjects')->active()->orderBy('txtProjectName')->get();
+        if ($authUser && $authUser->isEmployee()) {
+            $employees = MUser::active()->where('intUser_ID', $authUser->intUser_ID)->get();
+            $projectsQuery = MProject::with(['subProjects', 'user'])
+                ->where('bitActive', true)
+                ->where('intUser_ID', $authUser->intUser_ID);
+        } else {
+            $employees = MUser::active()->where('txtRole', 'Employee')->orderBy('txtEmployeeName')->get();
+            $projectsQuery = MProject::with(['subProjects', 'user'])->where('bitActive', true);
+
+            if ($authUser && ! $authUser->isSuperadmin()) {
+                $departmentId = $authUser->intDepartment_ID ?: 1;
+                $projectsQuery->where('intDepartment_ID', $departmentId);
+            }
+
+            if ($request->filled('employee')) {
+                $projectsQuery->where('intUser_ID', $request->employee);
+            }
+        }
+
+        $projects = $projectsQuery
+            ->orderBy('txtProjectName')
+            ->get();
 
         $handsontableData = $tasks->map(fn(TrDailyTask $task) => [
             'id' => $task->intDailyTask_ID,
@@ -65,6 +85,10 @@ class DailyTaskController extends Controller
         $projectsLookup = $projects->map(fn(MProject $p) => [
             'id' => $p->intProject_ID,
             'name' => $p->txtProjectName,
+            'code' => $p->txtProjectCode,
+            'userId' => $p->intUser_ID,
+            'userName' => $p->user?->txtEmployeeName,
+            'isMine' => $p->intUser_ID === $authUserId,
             'subProjects' => $p->subProjects->map(fn(TrSubProject $sp) => [
                 'id' => $sp->intSubProject_ID,
                 'name' => $sp->txtSubProjectName,
@@ -84,6 +108,7 @@ class DailyTaskController extends Controller
             'projects' => $projects,
             'projectsLookup' => $projectsLookup,
             'authUser' => $authUser,
+            'authUserId' => $authUserId,
         ]);
     }
 

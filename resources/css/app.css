@@ -11,13 +11,16 @@
     width: 6px;
     height: 6px;
 }
+
 .custom-scrollbar::-webkit-scrollbar-track {
     background: transparent;
 }
+
 .custom-scrollbar::-webkit-scrollbar-thumb {
     background: #cbd5e1;
     border-radius: 9999px;
 }
+
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
     background: #94a3b8;
 }
@@ -25,12 +28,24 @@
 /* ==========================================================================
    Handsontable Modern Light Demo Theme (Matching Official Demo)
    ========================================================================== */
+:root {
+    color-scheme: light !important;
+    --ht-color-background: #ffffff !important;
+    --ht-color-text: #1e293b !important;
+    --ht-color-header-background: #f8fafc !important;
+}
+
 .handsontable-container-card {
     border-radius: 1.25rem;
     box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
-    background: #ffffff;
+    background: #ffffff !important;
     border: 1px solid #e2e8f0;
     overflow: hidden;
+}
+
+#hotTableContainer {
+    background-color: #ffffff !important;
+    color-scheme: light !important;
 }
 
 .handsontable {
@@ -38,6 +53,20 @@
     font-size: 13px !important;
     color: #1e293b !important;
     background-color: #ffffff !important;
+    color-scheme: light !important;
+}
+
+.handsontable .wtHolder,
+.handsontable .wtHider,
+.handsontable .wtSpreader,
+.handsontable .ht_master,
+.handsontable .ht_clone_top,
+.handsontable .ht_clone_left,
+.handsontable .ht_clone_bottom,
+.handsontable .ht_clone_top_left_corner,
+.handsontable .ht_clone_bottom_inline_start_corner {
+    background-color: #ffffff !important;
+    color-scheme: light !important;
 }
 
 .handsontable table.htCore {
@@ -46,9 +75,16 @@
     background-color: #ffffff !important;
 }
 
+.handsontable tbody,
+.handsontable thead,
+.handsontable tr {
+    background-color: #ffffff !important;
+}
+
 /* Column Headers */
 .handsontable th {
     background: #f8fafc !important;
+    background-color: #f8fafc !important;
     color: #475569 !important;
     font-weight: 700 !important;
     font-size: 11px !important;
@@ -66,8 +102,10 @@
 
 /* Row Headers (Numbers on the left) */
 .handsontable th.ht__highlight,
-.handsontable th:first-child {
+.handsontable th:first-child,
+.handsontable tr th {
     background: #f8fafc !important;
+    background-color: #f8fafc !important;
     color: #64748b !important;
     font-weight: 600 !important;
     font-size: 11px !important;
@@ -116,6 +154,24 @@
     font-size: 11px !important;
 }
 
+/* Handsontable Input / Textarea Editor - Prevents Dark Mode Black Box */
+.handsontable .handsontableInputHolder {
+    color-scheme: light !important;
+}
+
+.handsontable textarea.handsontableInput,
+.handsontable input.handsontableInput,
+.handsontableInput {
+    background-color: #ffffff !important;
+    color: #1e293b !important;
+    color-scheme: light !important;
+    outline: 2px solid #006838 !important;
+    outline-offset: -1px !important;
+    font-family: 'Inter', system-ui, sans-serif !important;
+    font-size: 12.5px !important;
+    box-shadow: 0 4px 14px rgba(0, 104, 56, 0.12) !important;
+}
+
 /* --- Status Pill Badges --- */
 .ht-status-badge {
     display: inline-flex;
@@ -127,7 +183,7 @@
     font-weight: 700;
     line-height: 1.2;
     text-transform: capitalize;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
 }
 
 .ht-status-completed {
@@ -214,11 +270,12 @@
 .htContextMenu,
 .htDropdownMenu {
     background-color: #ffffff !important;
+    color-scheme: light !important;
     border: 1px solid #e2e8f0 !important;
     border-radius: 14px !important;
     box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
     padding: 6px !important;
-    z-index: 100 !important;
+    z-index: 250 !important;
 }
 
 .htContextMenu table.htCore td,
@@ -239,21 +296,41 @@
     border-radius: 8px !important;
 }
 
+/* Handsontable Listbox & Autocomplete Popups (Clean, non-interfering Walkontable styles) */
+.handsontable.listbox,
 .handsontable .htAutocompleteHolder {
     background-color: #ffffff !important;
+    color-scheme: light !important;
     border: 1px solid #cbd5e1 !important;
-    border-radius: 10px !important;
-    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1) !important;
-    overflow: hidden !important;
+    border-radius: 12px !important;
+    box-shadow: 0 16px 36px -4px rgba(0, 0, 0, 0.16), 0 8px 16px -2px rgba(0, 0, 0, 0.08) !important;
+    z-index: 250 !important;
 }
 
+.handsontable.listbox .wtHolder,
+.handsontable .htAutocompleteHolder .wtHolder {
+    background-color: #ffffff !important;
+    color-scheme: light !important;
+}
+
+.handsontable.listbox td,
 .handsontable .htAutocompleteHolder td {
     background-color: #ffffff !important;
     color: #334155 !important;
-    padding: 6px 12px !important;
+    padding: 8px 14px !important;
+    font-size: 12.5px !important;
+    font-weight: 500 !important;
+    line-height: 1.4 !important;
+    border-bottom: 1px solid #f1f5f9 !important;
+    cursor: pointer !important;
 }
 
-.handsontable .htAutocompleteHolder td.current {
+.handsontable.listbox td.current,
+.handsontable.listbox td.htHighlighted,
+.handsontable.listbox tr:hover td,
+.handsontable .htAutocompleteHolder td.current,
+.handsontable .htAutocompleteHolder td.htHighlighted,
+.handsontable .htAutocompleteHolder tr:hover td {
     background-color: #f0fdf4 !important;
     color: #006838 !important;
     font-weight: 700 !important;
@@ -261,13 +338,27 @@
 
 /* Modal and transition animations */
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(6px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 @keyframes scaleIn {
-    from { opacity: 0; transform: scale(0.96); }
-    to { opacity: 1; transform: scale(1); }
+    from {
+        opacity: 0;
+        transform: scale(0.96);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
 }
 
 .animate-fade-in {
@@ -284,7 +375,7 @@
     inset: 0;
     background: rgba(0, 0, 0, 0.45);
     backdrop-filter: blur(2px);
-    z-index: 50;
+    z-index: 2000;
     display: none;
     align-items: center;
     justify-content: center;

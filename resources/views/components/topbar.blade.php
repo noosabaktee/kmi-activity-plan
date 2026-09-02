@@ -2,7 +2,7 @@
 $authUser = \App\Models\MUser::with(['department', 'subDepartment'])->find(session('auth_user_id'));
 @endphp
 
-<header class="topbar sticky top-0 bg-white/90 backdrop-blur-md border-b border-[#DDE5DD] z-30 px-4 md:px-6 py-3.5 flex items-center justify-between shadow-xs">
+<header class="topbar sticky top-0 bg-white/90 backdrop-blur-md border-b border-[#DDE5DD] z-40 px-4 md:px-6 py-3.5 flex items-center justify-between shadow-xs">
     <div class="flex items-center gap-3">
         <button type="button" class="p-2.5 rounded-xl text-[#006838] bg-[#EBF5E9]/70 hover:bg-[#EBF5E9] hover:text-[#004d29] border border-emerald-200/70 transition cursor-pointer flex items-center justify-center shadow-2xs group" onclick="toggleSidebar()" aria-label="Toggle Menu" title="Buka Menu Navigasi">
             <i class="fa-solid fa-bars-staggered text-lg group-hover:scale-105 transition-transform"></i>

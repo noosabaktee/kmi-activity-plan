@@ -7,10 +7,10 @@ $isMasterActive = request()->routeIs('master.*');
 @endphp
 
 <!-- Backdrop Overlay for Hamburger Drawer -->
-<div class="sidebar-overlay fixed inset-0 bg-black/50 backdrop-blur-xs z-40 hidden transition-opacity duration-300 cursor-pointer" id="sidebarOverlay" onclick="closeSidebar()"></div>
+<div class="sidebar-overlay fixed inset-0 bg-black/50 backdrop-blur-xs z-[990] hidden transition-opacity duration-300 cursor-pointer" id="sidebarOverlay" onclick="closeSidebar()"></div>
 
 <!-- Slide-out Drawer Sidebar -->
-<aside class="sidebar fixed inset-y-0 left-0 w-72 bg-[#004d29] text-white flex flex-col shrink-0 h-full max-h-screen z-50 transition-transform duration-300 ease-in-out -translate-x-full shadow-2xl" id="sidebar" aria-label="Sidebar Navigation">
+<aside class="sidebar fixed inset-y-0 left-0 w-72 bg-[#004d29] text-white flex flex-col shrink-0 h-full max-h-screen z-[1000] transition-transform duration-300 ease-in-out -translate-x-full shadow-2xl" id="sidebar" aria-label="Sidebar Navigation">
     <!-- Brand Logo Area -->
     <div class="p-5 flex items-center justify-between border-b border-white/10 bg-[#003d20]">
         <a href="{{ route('dashboard.index') }}" class="flex items-center gap-3 no-underline text-white">
