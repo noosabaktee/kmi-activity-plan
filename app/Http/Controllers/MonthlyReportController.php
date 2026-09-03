@@ -22,6 +22,15 @@ class MonthlyReportController extends Controller
         $selectedEmployee = $request->get('employee');
         $selectedType = $request->get('type');
 
+        $data = self::getMonthlyReportData($selectedMonth, $selectedSubDept, $selectedEmployee, $selectedType);
+
+        return view('reports.monthly-report', $data);
+    }
+
+    public static function getMonthlyReportData(?string $selectedMonth = null, $selectedSubDept = null, $selectedEmployee = null, $selectedType = null): array
+    {
+        $selectedMonth = $selectedMonth ?: date('Y-m');
+
         $query = MProject::with(['subDepartment', 'projectType', 'user', 'subProjects', 'directStages'])
             ->active()
             ->orderBy('txtKpiLevel')
@@ -157,7 +166,7 @@ class MonthlyReportController extends Controller
             ];
         });
 
-        return view('reports.monthly-report', [
+        return [
             'projects' => $projects,
             'subDepartments' => $subDepartments,
             'allEmployees' => $allEmployees,
@@ -200,6 +209,6 @@ class MonthlyReportController extends Controller
             'chartSubDeptTotalWeight' => $chartSubDeptTotalWeight,
             'chartSubDeptProjectCount' => $chartSubDeptProjectCount,
             'monthName' => $monthCarbon->translatedFormat('F Y'),
-        ]);
+        ];
     }
 }

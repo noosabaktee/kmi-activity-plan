@@ -17,7 +17,15 @@ class DashboardController extends Controller
 {
     public function index(Request $request): View
     {
-        $authUser = MUser::with(['department', 'subDepartment'])->find(session('auth_user_id'));
+        $userId = session('auth_user_id');
+        $authUser = $userId ? MUser::with(['department', 'subDepartment'])->where('bitActive', true)->find($userId) : null;
+
+        if (! $authUser) {
+            $monthlyData = MonthlyReportController::getMonthlyReportData();
+
+            return view('dashboard.guest', $monthlyData);
+        }
+
         $departmentId = $authUser->intDepartment_ID ?: 1;
 
         // Base query scoped by department (unless superadmin filter is applied)

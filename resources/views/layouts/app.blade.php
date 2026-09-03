@@ -39,13 +39,17 @@
 </head>
 
 <body class="bg-[#F4F7F4] text-[#222222] font-['Inter',sans-serif] min-h-screen flex flex-col antialiased">
+    @if (!($hideSidebar ?? false))
     @include('components.sidebar')
+    @endif
 
     <main class="main-wrapper flex-1 flex flex-col min-w-0 w-full transition-all duration-300">
+        @if (!($hideTopbar ?? $hideNavbar ?? false))
         @include('components.topbar', [
         'pageTitle' => $pageTitle ?? 'KMI ACTIVITY PLAN',
         'pageSubtitle' => $pageSubtitle ?? '<span>Monitor</span> &bull; <span>Plan</span> &bull; <span>Excel</span>',
         ])
+        @endif
 
         <div class="content-area p-4 md:p-6 lg:p-8 flex-1 w-full">
             @if (session('success'))
@@ -81,6 +85,9 @@
 
     @stack('modals')
     @include('components.delete-modal')
+    @if (!session('auth_user_id'))
+    @include('components.login-modal')
+    @endif
     @stack('scripts')
 </body>
 

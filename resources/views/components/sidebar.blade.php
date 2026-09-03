@@ -101,6 +101,7 @@ $isMasterActive = request()->routeIs('master.*');
 
     <!-- User Profile & Department Badge at Bottom -->
     <div class="p-3 bg-[#003d20] border-t border-white/10">
+        @if ($authUser)
         <div class="flex items-center gap-3 p-2 rounded-xl bg-white/5">
             <div class="w-9 h-9 rounded-lg bg-[#8CC63F] text-[#004d29] font-bold flex items-center justify-center text-sm shadow">
                 {{ strtoupper(substr($authUser->txtEmployeeName ?? 'U', 0, 2)) }}
@@ -116,6 +117,12 @@ $isMasterActive = request()->routeIs('master.*');
                 </button>
             </form>
         </div>
+        @else
+        <button type="button" onclick="closeSidebar(); openLoginModal();" class="w-full flex items-center justify-center gap-2 p-2.5 rounded-xl bg-[#8CC63F] hover:bg-[#7ab233] text-[#004d29] font-bold text-xs shadow-md transition cursor-pointer">
+            <i class="fa-solid fa-right-to-bracket"></i>
+            <span>Masuk / Login</span>
+        </button>
+        @endif
     </div>
 </aside>
 

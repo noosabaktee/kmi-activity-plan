@@ -748,3 +748,54 @@ test('it allows creating and editing a main project with a skillset from master 
     $updateResponse->assertRedirect(route('projects.show', $project));
     $this->assertEquals($newSkillset->intSkillset_ID, $project->fresh()->intSkillset_ID);
 });
+
+test('it renders the guest dashboard on index with 4 stat cards and 4 monthly report charts when unauthenticated', function () {
+    $response = $this->get(route('dashboard.index'));
+
+    $response->assertStatus(200);
+    $response->assertSee('Total Project & Bobot', false);
+    $response->assertSee('Rata-rata Progress Actual');
+    $response->assertSee('Project Selesai 100%');
+    $response->assertSee('Total Logbook Task (Bulan Ini)');
+    $response->assertSee('projectProgressChart');
+    $response->assertSee('projectStatusChart');
+    $response->assertSee('dailyTrendChart');
+    $response->assertSee('subDeptProgressChart');
+    $response->assertSee('Masuk / Login');
+    $response->assertSee('id="loginModal"', false);
+    $response->assertSee('openLoginModal()', false);
+    $response->assertSee('name="txtEmail"', false);
+    $response->assertSee('name="txtPassword"', false);
+    $response->assertSee(route('login.authenticate'));
+    // Ensure table and employee cards are NOT rendered for guest
+    $response->assertDontSee('Tabel Ringkasan Perkembangan Project');
+    $response->assertDontSee('Ringkasan Kinerja & Beban Kerja Per Employee');
+    // Ensure navbar (topbar) and sidebar are NOT rendered on guest page
+    $response->assertDontSee('<header class="topbar', false);
+    $response->assertDontSee('<aside class="sidebar', false);
+});
+
+test('it preserves original authenticated dashboard when user is logged in', function () {
+    $user = MUser::where('txtRole', 'Head')->first();
+
+    $response = $this->withSession(['auth_user_id' => $user->intUser_ID])
+        ->get(route('dashboard.index'));
+
+    $response->assertStatus(200);
+    $response->assertSee('DASHBOARD KPI & ACTIVITY');
+    $response->assertSee('dashboardExposureChart');
+    $response->assertSee('Exposure S-Curve Overview');
+    // Ensure navbar (topbar) and sidebar ARE rendered for authenticated user
+    $response->assertSee('<header class="topbar', false);
+    $response->assertSee('<aside class="sidebar', false);
+});
+
+test('it redirects to dashboard.index upon logout', function () {
+    $user = MUser::first();
+
+    $response = $this->withSession(['auth_user_id' => $user->intUser_ID])
+        ->post(route('logout'));
+
+    $response->assertRedirect(route('dashboard.index'));
+    expect(session('auth_user_id'))->toBeNull();
+});

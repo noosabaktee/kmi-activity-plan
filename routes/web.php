@@ -26,8 +26,9 @@ Route::middleware('kmi.guest')->group(function () {
     Route::post('/register', [AuthPageController::class, 'store'])->name('register.store');
 });
 
+Route::get('/', [DashboardController::class, 'index'])->name('dashboard.index');
+
 Route::middleware('kmi.auth')->group(function () {
-    Route::get('/', [DashboardController::class, 'index'])->name('dashboard.index');
     Route::post('/logout', [AuthPageController::class, 'logout'])->name('logout');
 
     // 1. Projects

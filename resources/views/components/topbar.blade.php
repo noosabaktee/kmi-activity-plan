@@ -14,6 +14,7 @@ $authUser = \App\Models\MUser::with(['department', 'subDepartment'])->find(sessi
     </div>
 
     <div class="flex items-center gap-3">
+        @if ($authUser)
         <!-- Department Badge -->
         <div class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#EBF5E9] border border-emerald-200 text-[#006838] text-xs font-semibold shadow-2xs">
             <i class="fa-solid fa-building text-emerald-600"></i>
@@ -36,5 +37,18 @@ $authUser = \App\Models\MUser::with(['department', 'subDepartment'])->find(sessi
                 <span class="block text-[10px] text-gray-500 leading-tight mt-0.5">{{ $authUser->txtRole }}</span>
             </div>
         </a>
+        @else
+        <!-- Date indicator -->
+        <div class="hidden md:flex items-center gap-1.5 text-xs text-gray-500 font-medium bg-gray-50 px-3 py-1.5 rounded-full border border-gray-200">
+            <i class="fa-regular fa-calendar text-[#8CC63F]"></i>
+            <span>{{ now()->translatedFormat('d M Y') }}</span>
+        </div>
+
+        <!-- Login Button for Guest -->
+        <button type="button" onclick="openLoginModal()" class="px-4 py-2 rounded-xl bg-[#006838] hover:bg-[#004d29] text-white font-bold text-xs shadow-md transition flex items-center gap-2 cursor-pointer">
+            <i class="fa-solid fa-right-to-bracket text-[#8CC63F]"></i>
+            <span>Masuk / Login</span>
+        </button>
+        @endif
     </div>
 </header>
