@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Models\Concerns\GeneratesIntegerIds;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class TrSubProject extends Model
@@ -48,6 +49,16 @@ class TrSubProject extends Model
     public function project(): BelongsTo
     {
         return $this->belongsTo(MProject::class, 'intProject_ID', 'intProject_ID');
+    }
+
+    public function assignments(): HasMany
+    {
+        return $this->hasMany(TrProjectAssignment::class, 'intSubProject_ID', 'intSubProject_ID');
+    }
+
+    public function assignedUsers(): BelongsToMany
+    {
+        return $this->belongsToMany(MUser::class, 'trProjectAssignment', 'intSubProject_ID', 'intUser_ID');
     }
 
     public function stages(): HasMany

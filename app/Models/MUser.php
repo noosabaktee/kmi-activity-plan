@@ -80,6 +80,24 @@ class MUser extends Model
             ->where('bitActive', true);
     }
 
+    public function projectAssignments(): HasMany
+    {
+        return $this->hasMany(TrProjectAssignment::class, 'intUser_ID', 'intUser_ID');
+    }
+
+    public function assignedProjects(): BelongsToMany
+    {
+        return $this->belongsToMany(MProject::class, 'trProjectAssignment', 'intUser_ID', 'intProject_ID')
+            ->distinct();
+    }
+
+    public function assignedSubProjects(): BelongsToMany
+    {
+        return $this->belongsToMany(TrSubProject::class, 'trProjectAssignment', 'intUser_ID', 'intSubProject_ID')
+            ->whereNotNull('trProjectAssignment.intSubProject_ID')
+            ->distinct();
+    }
+
     public function dailyTasks(): HasMany
     {
         return $this->hasMany(TrDailyTask::class, 'intUser_ID', 'intUser_ID');

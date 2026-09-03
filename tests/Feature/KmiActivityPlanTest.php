@@ -8,6 +8,7 @@ use App\Models\MUser;
 use App\Models\MWeeklyPlan;
 use App\Models\TrDailyPlanActivity;
 use App\Models\TrDailyTask;
+use App\Models\TrProjectAssignment;
 use App\Models\TrSubProject;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -60,6 +61,23 @@ test('it displays project catalog with single and multi sub projects', function 
     $response->assertSee('Sub Projects');
 });
 
+test('it renders the project creation and edit form successfully', function () {
+    $user = MUser::where('txtRole', 'Head')->first();
+    $project = MProject::first();
+
+    $responseCreate = $this->withSession(['auth_user_id' => $user->intUser_ID])
+        ->get(route('projects.create'));
+    $responseCreate->assertStatus(200);
+    $responseCreate->assertSee('Formulir Rencana Project');
+    $responseCreate->assertSee('Assignment Karyawan (Pelaksana Project)');
+
+    $responseEdit = $this->withSession(['auth_user_id' => $user->intUser_ID])
+        ->get(route('projects.edit', $project));
+    $responseEdit->assertStatus(200);
+    $responseEdit->assertSee('Edit Project');
+    $responseEdit->assertSee('Assignment Karyawan (Pelaksana Project)');
+});
+
 test('it creates a new single project with stages', function () {
     $user = MUser::where('txtRole', 'Head')->first();
     $subDept = MSubDepartment::first();
@@ -73,6 +91,7 @@ test('it creates a new single project with stages', function () {
             'intProjectType_ID' => $type->intProjectType_ID,
             'intSubDepartment_ID' => $subDept->intSubDepartment_ID,
             'intUser_ID' => $user->intUser_ID,
+            'assignments' => [$user->intUser_ID, 9],
             'txtKpiLevel' => 'Individu',
             'floatWeight' => 15,
             'txtDeliverable' => 'Full test suite',
@@ -87,6 +106,13 @@ test('it creates a new single project with stages', function () {
     $this->assertDatabaseHas('mProject', [
         'txtProjectName' => 'New Automated Testing System',
         'floatWeight' => 15,
+    ]);
+
+    $singleProject = MProject::where('txtProjectName', 'New Automated Testing System')->first();
+    $this->assertDatabaseHas('trProjectAssignment', [
+        'intProject_ID' => $singleProject->intProject_ID,
+        'intSubProject_ID' => null,
+        'intUser_ID' => 9,
     ]);
 });
 
@@ -114,6 +140,7 @@ test('it creates a project with sub projects containing dates and direct stages'
                     'start_date' => '2026-01-15',
                     'end_date' => '2026-06-30',
                     'deliverable' => 'Core Bot',
+                    'assignments' => [5, 9],
                     'stages' => [
                         ['step' => 'Planning Sub 1', 'start' => '2026-01-15', 'end' => '2026-03-31', 'plan' => 50, 'actual' => 50],
                         ['step' => 'Execution Sub 1', 'start' => '2026-04-01', 'end' => '2026-06-30', 'plan' => 50, 'actual' => 25],
@@ -125,6 +152,7 @@ test('it creates a project with sub projects containing dates and direct stages'
                     'start_date' => '2026-07-01',
                     'end_date' => '2026-12-20',
                     'deliverable' => 'Web App Bot',
+                    'assignments' => [10],
                     'stages' => [
                         ['step' => 'Execution Sub 2', 'start' => '2026-07-01', 'end' => '2026-12-20', 'plan' => 100, 'actual' => 50],
                     ],
@@ -147,6 +175,11 @@ test('it creates a project with sub projects containing dates and direct stages'
     ]);
 
     $sub1 = TrSubProject::where('intProject_ID', $project->intProject_ID)->where('txtSubProjectName', 'Agent Sub 1')->first();
+    $this->assertDatabaseHas('trProjectAssignment', [
+        'intProject_ID' => $project->intProject_ID,
+        'intSubProject_ID' => $sub1->intSubProject_ID,
+        'intUser_ID' => 5,
+    ]);
     expect($sub1->stages)->toHaveCount(2);
     expect($sub1->floatProgress)->toBe(75.0); // (50 + 25) / 100 * 100 = 75%
 
@@ -156,6 +189,75 @@ test('it creates a project with sub projects containing dates and direct stages'
         'txtProjectStageStep' => 'Planning Sub 1',
         'dtmProjectStageStartDate' => '2026-01-15 00:00:00',
     ]);
+});
+
+test('it manages multiple employee assignments for single and sub-projects with ownership scope', function () {
+    $emp1 = MUser::find(5); // NRS
+    $emp2 = MUser::find(9); // AHO
+    $subDept = MSubDepartment::first();
+    $type = MProjectType::first();
+
+    // 1. Single Project with Multiple Assignments
+    $response = $this->withSession(['auth_user_id' => $emp1->intUser_ID])
+        ->post(route('projects.store'), [
+            'bitHasSubProject' => '0',
+            'txtProjectName' => 'Collaborative Single Project',
+            'intProjectType_ID' => $type->intProjectType_ID,
+            'intSubDepartment_ID' => $subDept->intSubDepartment_ID,
+            'assignments' => [$emp1->intUser_ID, $emp2->intUser_ID],
+            'txtKpiLevel' => 'Individu',
+            'floatWeight' => 20,
+            'stages' => [
+                ['step' => 'Stage 1', 'start' => '2026-01-01', 'end' => '2026-06-30', 'plan' => 100, 'actual' => 50],
+            ],
+        ]);
+
+    $response->assertRedirect(route('projects.index'));
+    $singleProj = MProject::where('txtProjectName', 'Collaborative Single Project')->first();
+    expect($singleProj)->not->toBeNull();
+    expect($singleProj->allAssignedUsers()->pluck('intUser_ID')->toArray())->toEqualCanonicalizing([$emp1->intUser_ID, $emp2->intUser_ID]);
+
+    // Both employees can query this project via forUser scope
+    expect(MProject::forUser($emp1->intUser_ID)->pluck('intProject_ID'))->toContain($singleProj->intProject_ID);
+    expect(MProject::forUser($emp2->intUser_ID)->pluck('intProject_ID'))->toContain($singleProj->intProject_ID);
+
+    // 2. Sub Project with Distinct Assignments
+    $emp3 = MUser::find(10); // AMI
+    $response2 = $this->withSession(['auth_user_id' => $emp1->intUser_ID])
+        ->post(route('projects.store'), [
+            'bitHasSubProject' => '1',
+            'txtProjectName' => 'Multi Sub Assignment Project',
+            'intProjectType_ID' => $type->intProjectType_ID,
+            'intSubDepartment_ID' => $subDept->intSubDepartment_ID,
+            'txtKpiLevel' => 'Department',
+            'floatWeight' => 30,
+            'sub_projects' => [
+                [
+                    'name' => 'Sub Alpha',
+                    'weight' => 50,
+                    'assignments' => [$emp2->intUser_ID],
+                    'stages' => [
+                        ['step' => 'Step A', 'start' => '2026-01-01', 'end' => '2026-06-30', 'plan' => 100, 'actual' => 100],
+                    ],
+                ],
+                [
+                    'name' => 'Sub Beta',
+                    'weight' => 50,
+                    'assignments' => [$emp3->intUser_ID],
+                    'stages' => [
+                        ['step' => 'Step B', 'start' => '2026-07-01', 'end' => '2026-12-31', 'plan' => 100, 'actual' => 50],
+                    ],
+                ],
+            ],
+        ]);
+
+    $response2->assertRedirect(route('projects.index'));
+    $multiProj = MProject::where('txtProjectName', 'Multi Sub Assignment Project')->first();
+    expect($multiProj)->not->toBeNull();
+
+    // Emp2 and Emp3 own the project via their respective sub-projects
+    expect(MProject::forUser($emp2->intUser_ID)->pluck('intProject_ID'))->toContain($multiProj->intProject_ID);
+    expect(MProject::forUser($emp3->intUser_ID)->pluck('intProject_ID'))->toContain($multiProj->intProject_ID);
 });
 
 test('it updates an existing project with sub projects, updating dates and stages', function () {

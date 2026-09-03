@@ -20,7 +20,10 @@ class ExposureCurveBuilder
                 'subDepartment',
                 'projectType',
                 'user',
+                'assignments.user',
                 'subProjects.stages',
+                'subProjects.assignments.user',
+                'subProjects.assignedUsers',
                 'directStages',
             ])->active()->get();
         }
@@ -139,6 +142,12 @@ class ExposureCurveBuilder
             'hasSubProject' => (bool) $project->bitHasSubProject,
             'employeeId' => (string) $project->intUser_ID,
             'employeeName' => $project->user?->txtEmployeeName ?? 'Unassigned',
+            'assignedEmployeeIds' => $project->allAssignedUsers()->pluck('intUser_ID')->map(fn($id) => (string) $id)->values()->all(),
+            'assignedEmployees' => $project->allAssignedUsers()->map(fn($u) => [
+                'id' => (string) $u->intUser_ID,
+                'name' => $u->txtEmployeeName,
+                'code' => $u->txtEmployeeCode,
+            ])->values()->all(),
             'subDeptCode' => $project->subDepartment?->txtSubDepartmentCode ?? 'MDP',
             'stages' => $stages->sortBy('number')->values()->all(),
             'subProjects' => $project->bitHasSubProject ? $project->subProjects->map(fn($sp) => [
@@ -152,6 +161,12 @@ class ExposureCurveBuilder
                 'weight' => (float) $sp->floatWeight,
                 'progress' => (float) $sp->floatProgress,
                 'score' => $sp->intScore,
+                'assignedEmployeeIds' => $sp->assignedUsers->pluck('intUser_ID')->map(fn($id) => (string) $id)->values()->all(),
+                'assignedEmployees' => $sp->assignedUsers->map(fn($u) => [
+                    'id' => (string) $u->intUser_ID,
+                    'name' => $u->txtEmployeeName,
+                    'code' => $u->txtEmployeeCode,
+                ])->values()->all(),
                 'stageCount' => $sp->stages->count(),
                 'stages' => $sp->stages->map(fn($st) => [
                     'id' => $st->intProjectStage_ID,

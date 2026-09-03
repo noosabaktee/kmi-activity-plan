@@ -7,6 +7,7 @@ use App\Models\MProject;
 use App\Models\MProjectType;
 use App\Models\MSubDepartment;
 use App\Models\MUser;
+use App\Models\TrProjectAssignment;
 use App\Models\TrProjectStage;
 use App\Models\TrSubProject;
 use App\Support\ExposureCurveBuilder;
@@ -23,7 +24,15 @@ class ProjectController extends Controller
         $authUser = MUser::with(['department', 'subDepartment'])->find(session('auth_user_id'));
         $departmentId = $authUser->intDepartment_ID ?: 1;
 
-        $query = MProject::with(['subDepartment', 'projectType', 'user', 'subProjects.stages', 'directStages'])
+        $query = MProject::with([
+            'subDepartment',
+            'projectType',
+            'user',
+            'assignments.user',
+            'subProjects.stages',
+            'subProjects.assignments.user',
+            'directStages',
+        ])
             ->where('bitActive', true);
 
         if (! $authUser->isSuperadmin()) {
@@ -40,7 +49,7 @@ class ProjectController extends Controller
         }
 
         if ($request->filled('employee')) {
-            $query->where('intUser_ID', $request->input('employee'));
+            $query->forUser($request->input('employee'));
         }
 
         if ($request->filled('kpi_level')) {
@@ -93,7 +102,9 @@ class ProjectController extends Controller
             'txtProjectCode' => ['nullable', 'string', 'max:50'],
             'intProjectType_ID' => ['required', 'exists:mProjectType,intProjectType_ID'],
             'intSubDepartment_ID' => ['nullable', 'exists:mSubDepartment,intSubDepartment_ID'],
-            'intUser_ID' => ['required', 'exists:mUser,intUser_ID'],
+            'intUser_ID' => ['nullable', 'exists:mUser,intUser_ID'],
+            'assignments' => ['nullable', 'array'],
+            'assignments.*' => ['nullable', 'integer', 'exists:mUser,intUser_ID'],
             'txtKpiLevel' => ['required', 'string'],
             'txtDeliverable' => ['nullable', 'string'],
             'txtTargetSkalaGrade' => ['nullable', 'string'],
@@ -122,6 +133,8 @@ class ProjectController extends Controller
             'sub_projects.*.weight' => ['nullable', 'numeric', 'min:0'],
             'sub_projects.*.start_date' => ['nullable', 'date'],
             'sub_projects.*.end_date' => ['nullable', 'date'],
+            'sub_projects.*.assignments' => ['nullable', 'array'],
+            'sub_projects.*.assignments.*' => ['nullable', 'integer', 'exists:mUser,intUser_ID'],
             'sub_projects.*.stages' => ['nullable', 'array'],
             'sub_projects.*.stages.*.step' => ['nullable', 'string', 'max:255'],
             'sub_projects.*.stages.*.start' => ['nullable', 'date'],
@@ -133,12 +146,18 @@ class ProjectController extends Controller
         $hasSubProject = $request->boolean('bitHasSubProject');
         $now = now();
 
-        DB::transaction(function () use ($validated, $hasSubProject, $authUser, $now) {
+        $firstAssigned = ! empty($validated['assignments'][0]) ? (int) $validated['assignments'][0] : null;
+        if (! $firstAssigned && ! empty($validated['sub_projects'][0]['assignments'][0])) {
+            $firstAssigned = (int) $validated['sub_projects'][0]['assignments'][0];
+        }
+        $intUserId = ! empty($validated['intUser_ID']) ? (int) $validated['intUser_ID'] : ($firstAssigned ?: ($authUser?->intUser_ID ?: 1));
+
+        DB::transaction(function () use ($validated, $hasSubProject, $authUser, $now, $intUserId) {
             $project = MProject::create([
                 'intDepartment_ID' => $authUser->intDepartment_ID ?: 1,
                 'intSubDepartment_ID' => $validated['intSubDepartment_ID'] ?? $authUser->intSubDepartment_ID,
                 'intProjectType_ID' => $validated['intProjectType_ID'],
-                'intUser_ID' => $validated['intUser_ID'],
+                'intUser_ID' => $intUserId,
                 'txtProjectCode' => !empty($validated['txtProjectCode']) ? $validated['txtProjectCode'] : ('PRJ-' . date('Y') . '-' . str_pad((MProject::max('intProject_ID') ?? 0) + 1, 3, '0', STR_PAD_LEFT)),
                 'txtProjectName' => $validated['txtProjectName'],
                 'txtKpiLevel' => $validated['txtKpiLevel'],
@@ -184,6 +203,21 @@ class ProjectController extends Controller
                         'dtmInserted' => $now,
                     ]);
 
+                    // Assignments for this sub-project
+                    if (! empty($subData['assignments'])) {
+                        foreach (array_unique($subData['assignments']) as $assigneeId) {
+                            if (! empty($assigneeId)) {
+                                TrProjectAssignment::create([
+                                    'intProject_ID' => $project->intProject_ID,
+                                    'intSubProject_ID' => $subProject->intSubProject_ID,
+                                    'intUser_ID' => (int) $assigneeId,
+                                    'txtInsertedBy' => $authUser->txtEmail ?? 'system',
+                                    'dtmInserted' => $now,
+                                ]);
+                            }
+                        }
+                    }
+
                     if (! empty($subData['stages'])) {
                         foreach ($subData['stages'] as $sIdx => $stData) {
                             if (empty($stData['step'])) {
@@ -205,24 +239,41 @@ class ProjectController extends Controller
                         $subProject->recalculateProgress();
                     }
                 }
-            } elseif (! empty($validated['stages'])) {
-                // Direct stages
-                foreach ($validated['stages'] as $sIdx => $stData) {
-                    if (empty($stData['step'])) {
-                        continue;
+            } else {
+                // Direct assignments (Single Project)
+                if (! empty($validated['assignments'])) {
+                    foreach (array_unique($validated['assignments']) as $assigneeId) {
+                        if (! empty($assigneeId)) {
+                            TrProjectAssignment::create([
+                                'intProject_ID' => $project->intProject_ID,
+                                'intSubProject_ID' => null,
+                                'intUser_ID' => (int) $assigneeId,
+                                'txtInsertedBy' => $authUser->txtEmail ?? 'system',
+                                'dtmInserted' => $now,
+                            ]);
+                        }
                     }
-                    TrProjectStage::create([
-                        'intProject_ID' => $project->intProject_ID,
-                        'intSubProject_ID' => null,
-                        'intProjectStageNumber' => $sIdx + 1,
-                        'txtProjectStageStep' => $stData['step'],
-                        'dtmProjectStageStartDate' => $stData['start'] ?? $project->dtmProjectStartDate,
-                        'dtmProjectStageEndDate' => $stData['end'] ?? $project->dtmProjectEndDate,
-                        'floatProjectStagePlan' => (float) ($stData['plan'] ?? 0),
-                        'floatProjectStageActual' => (float) ($stData['actual'] ?? 0),
-                        'txtInsertedBy' => $authUser->txtEmail ?? 'system',
-                        'dtmInserted' => $now,
-                    ]);
+                }
+
+                if (! empty($validated['stages'])) {
+                    // Direct stages
+                    foreach ($validated['stages'] as $sIdx => $stData) {
+                        if (empty($stData['step'])) {
+                            continue;
+                        }
+                        TrProjectStage::create([
+                            'intProject_ID' => $project->intProject_ID,
+                            'intSubProject_ID' => null,
+                            'intProjectStageNumber' => $sIdx + 1,
+                            'txtProjectStageStep' => $stData['step'],
+                            'dtmProjectStageStartDate' => $stData['start'] ?? $project->dtmProjectStartDate,
+                            'dtmProjectStageEndDate' => $stData['end'] ?? $project->dtmProjectEndDate,
+                            'floatProjectStagePlan' => (float) ($stData['plan'] ?? 0),
+                            'floatProjectStageActual' => (float) ($stData['actual'] ?? 0),
+                            'txtInsertedBy' => $authUser->txtEmail ?? 'system',
+                            'dtmInserted' => $now,
+                        ]);
+                    }
                 }
             }
 
@@ -234,7 +285,17 @@ class ProjectController extends Controller
 
     public function show(MProject $project): View
     {
-        $project->load(['department', 'subDepartment', 'projectType', 'user', 'subProjects.stages', 'directStages', 'dailyTasks.user']);
+        $project->load([
+            'department',
+            'subDepartment',
+            'projectType',
+            'user',
+            'assignments.user',
+            'subProjects.stages',
+            'subProjects.assignments.user',
+            'directStages',
+            'dailyTasks.user',
+        ]);
         $typesData = ExposureCurveBuilder::payload(collect([$project]))['projectTypes'];
         $projectPayload = ExposureCurveBuilder::projectPayload($project, $typesData);
 
@@ -246,7 +307,12 @@ class ProjectController extends Controller
         $authUser = MUser::with(['department', 'subDepartment'])->find(session('auth_user_id'));
         $departmentId = $authUser->intDepartment_ID ?: 1;
 
-        $project->load(['subProjects.stages', 'directStages']);
+        $project->load([
+            'assignments.user',
+            'subProjects.stages',
+            'subProjects.assignments.user',
+            'directStages',
+        ]);
         $projectTypes = MProjectType::where('bitActive', true)->get();
         $subDepartments = MSubDepartment::where('intDepartment_ID', $departmentId)->where('bitActive', true)->get();
         $employees = MUser::where('bitActive', true)->where('intDepartment_ID', $departmentId)->get();
@@ -263,7 +329,9 @@ class ProjectController extends Controller
             'txtProjectCode' => ['nullable', 'string', 'max:50'],
             'intProjectType_ID' => ['required', 'exists:mProjectType,intProjectType_ID'],
             'intSubDepartment_ID' => ['nullable', 'exists:mSubDepartment,intSubDepartment_ID'],
-            'intUser_ID' => ['required', 'exists:mUser,intUser_ID'],
+            'intUser_ID' => ['nullable', 'exists:mUser,intUser_ID'],
+            'assignments' => ['nullable', 'array'],
+            'assignments.*' => ['nullable', 'integer', 'exists:mUser,intUser_ID'],
             'txtKpiLevel' => ['required', 'string'],
             'txtDeliverable' => ['nullable', 'string'],
             'txtTargetSkalaGrade' => ['nullable', 'string'],
@@ -286,6 +354,8 @@ class ProjectController extends Controller
             'sub_projects.*.weight' => ['nullable', 'numeric', 'min:0'],
             'sub_projects.*.start_date' => ['nullable', 'date'],
             'sub_projects.*.end_date' => ['nullable', 'date'],
+            'sub_projects.*.assignments' => ['nullable', 'array'],
+            'sub_projects.*.assignments.*' => ['nullable', 'integer', 'exists:mUser,intUser_ID'],
             'sub_projects.*.stages' => ['nullable', 'array'],
             'sub_projects.*.stages.*.step' => ['nullable', 'string', 'max:255'],
             'sub_projects.*.stages.*.start' => ['nullable', 'date'],
@@ -297,11 +367,17 @@ class ProjectController extends Controller
         $hasSubProject = $request->boolean('bitHasSubProject');
         $now = now();
 
-        DB::transaction(function () use ($project, $validated, $hasSubProject, $authUser, $now) {
+        $firstAssigned = ! empty($validated['assignments'][0]) ? (int) $validated['assignments'][0] : null;
+        if (! $firstAssigned && ! empty($validated['sub_projects'][0]['assignments'][0])) {
+            $firstAssigned = (int) $validated['sub_projects'][0]['assignments'][0];
+        }
+        $intUserId = ! empty($validated['intUser_ID']) ? (int) $validated['intUser_ID'] : ($firstAssigned ?: $project->intUser_ID);
+
+        DB::transaction(function () use ($project, $validated, $hasSubProject, $authUser, $now, $intUserId) {
             $project->update([
                 'intSubDepartment_ID' => $validated['intSubDepartment_ID'] ?? $project->intSubDepartment_ID,
                 'intProjectType_ID' => $validated['intProjectType_ID'],
-                'intUser_ID' => $validated['intUser_ID'],
+                'intUser_ID' => $intUserId,
                 'txtProjectCode' => $validated['txtProjectCode'] ?? $project->txtProjectCode,
                 'txtProjectName' => $validated['txtProjectName'],
                 'txtKpiLevel' => $validated['txtKpiLevel'],
@@ -321,8 +397,9 @@ class ProjectController extends Controller
 
             // If sub-projects provided
             if ($hasSubProject) {
-                // Delete previous direct stages
+                // Delete previous direct stages & direct assignments
                 TrProjectStage::where('intProject_ID', $project->intProject_ID)->whereNull('intSubProject_ID')->delete();
+                TrProjectAssignment::where('intProject_ID', $project->intProject_ID)->whereNull('intSubProject_ID')->delete();
 
                 // Sync sub projects
                 if (! empty($validated['sub_projects'])) {
@@ -367,6 +444,22 @@ class ProjectController extends Controller
                         }
                         $keepSubIds[] = $subProject->intSubProject_ID;
 
+                        // Sync assignments for this sub-project
+                        TrProjectAssignment::where('intSubProject_ID', $subProject->intSubProject_ID)->delete();
+                        if (! empty($subData['assignments'])) {
+                            foreach (array_unique($subData['assignments']) as $assigneeId) {
+                                if (! empty($assigneeId)) {
+                                    TrProjectAssignment::create([
+                                        'intProject_ID' => $project->intProject_ID,
+                                        'intSubProject_ID' => $subProject->intSubProject_ID,
+                                        'intUser_ID' => (int) $assigneeId,
+                                        'txtInsertedBy' => $authUser->txtEmail ?? 'system',
+                                        'dtmInserted' => $now,
+                                    ]);
+                                }
+                            }
+                        }
+
                         // Stages for this sub-project
                         if (isset($subData['stages']) && is_array($subData['stages'])) {
                             TrProjectStage::where('intSubProject_ID', $subProject->intSubProject_ID)->delete();
@@ -391,13 +484,33 @@ class ProjectController extends Controller
                         }
                     }
 
-                    // Delete removed sub-projects
+                    // Delete removed sub-projects and their assignments
+                    TrProjectAssignment::where('intProject_ID', $project->intProject_ID)
+                        ->whereNotIn('intSubProject_ID', $keepSubIds)
+                        ->whereNotNull('intSubProject_ID')
+                        ->delete();
                     TrSubProject::where('intProject_ID', $project->intProject_ID)->whereNotIn('intSubProject_ID', $keepSubIds)->delete();
                 }
             } else {
-                // Single Project: remove sub projects & sync direct stages
+                // Single Project: remove sub projects, sub-project assignments & sync direct stages + direct assignments
+                TrProjectAssignment::where('intProject_ID', $project->intProject_ID)->delete();
                 TrSubProject::where('intProject_ID', $project->intProject_ID)->delete();
                 TrProjectStage::where('intProject_ID', $project->intProject_ID)->delete();
+
+                // Direct assignments
+                if (! empty($validated['assignments'])) {
+                    foreach (array_unique($validated['assignments']) as $assigneeId) {
+                        if (! empty($assigneeId)) {
+                            TrProjectAssignment::create([
+                                'intProject_ID' => $project->intProject_ID,
+                                'intSubProject_ID' => null,
+                                'intUser_ID' => (int) $assigneeId,
+                                'txtInsertedBy' => $authUser->txtEmail ?? 'system',
+                                'dtmInserted' => $now,
+                            ]);
+                        }
+                    }
+                }
 
                 if (! empty($validated['stages'])) {
                     foreach ($validated['stages'] as $sIdx => $stData) {

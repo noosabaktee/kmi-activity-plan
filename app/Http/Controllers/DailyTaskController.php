@@ -44,12 +44,12 @@ class DailyTaskController extends Controller
 
         if ($authUser && $authUser->isEmployee()) {
             $employees = MUser::active()->where('intUser_ID', $authUser->intUser_ID)->get();
-            $projectsQuery = MProject::with(['subProjects', 'user'])
+            $projectsQuery = MProject::with(['subProjects.assignments.user', 'assignments.user', 'user'])
                 ->where('bitActive', true)
-                ->where('intUser_ID', $authUser->intUser_ID);
+                ->forUser($authUser->intUser_ID);
         } else {
             $employees = MUser::active()->where('txtRole', 'Employee')->orderBy('txtEmployeeName')->get();
-            $projectsQuery = MProject::with(['subProjects', 'user'])->where('bitActive', true);
+            $projectsQuery = MProject::with(['subProjects.assignments.user', 'assignments.user', 'user'])->where('bitActive', true);
 
             if ($authUser && ! $authUser->isSuperadmin()) {
                 $departmentId = $authUser->intDepartment_ID ?: 1;
@@ -57,7 +57,7 @@ class DailyTaskController extends Controller
             }
 
             if ($request->filled('employee')) {
-                $projectsQuery->where('intUser_ID', $request->employee);
+                $projectsQuery->forUser($request->employee);
             }
         }
 

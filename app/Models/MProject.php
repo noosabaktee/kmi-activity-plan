@@ -6,7 +6,9 @@ use App\Models\Concerns\GeneratesIntegerIds;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\DB;
 
 class MProject extends Model
 {
@@ -81,6 +83,38 @@ class MProject extends Model
         return $this->belongsTo(MUser::class, 'intUser_ID', 'intUser_ID');
     }
 
+    public function assignments(): HasMany
+    {
+        return $this->hasMany(TrProjectAssignment::class, 'intProject_ID', 'intProject_ID');
+    }
+
+    public function directAssignments(): HasMany
+    {
+        return $this->hasMany(TrProjectAssignment::class, 'intProject_ID', 'intProject_ID')
+            ->whereNull('intSubProject_ID');
+    }
+
+    public function assignedUsers(): BelongsToMany
+    {
+        return $this->belongsToMany(MUser::class, 'trProjectAssignment', 'intProject_ID', 'intUser_ID');
+    }
+
+    /**
+     * Get all unique users assigned to this project (directly or via sub-projects).
+     */
+    public function allAssignedUsers()
+    {
+        if ($this->relationLoaded('assignments') && $this->assignments->every(fn($a) => $a->relationLoaded('user'))) {
+            return $this->assignments->pluck('user')->filter()->unique('intUser_ID')->values();
+        }
+
+        return MUser::whereIn('intUser_ID', function ($q) {
+            $q->select('intUser_ID')
+                ->from('trProjectAssignment')
+                ->where('intProject_ID', $this->intProject_ID);
+        })->get();
+    }
+
     public function subProjects(): HasMany
     {
         return $this->hasMany(TrSubProject::class, 'intProject_ID', 'intProject_ID');
@@ -151,5 +185,18 @@ class MProject extends Model
     public function scopeActive(Builder $query): Builder
     {
         return $query->where('bitActive', true);
+    }
+
+    public function scopeForUser(Builder $query, $userId): Builder
+    {
+        return $query->where(function ($q) use ($userId) {
+            $q->where('intUser_ID', $userId)
+                ->orWhereExists(function ($sub) use ($userId) {
+                    $sub->select(DB::raw(1))
+                        ->from('trProjectAssignment')
+                        ->whereColumn('trProjectAssignment.intProject_ID', 'mProject.intProject_ID')
+                        ->where('trProjectAssignment.intUser_ID', $userId);
+                });
+        });
     }
 }

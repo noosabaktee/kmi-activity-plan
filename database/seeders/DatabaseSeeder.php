@@ -11,6 +11,7 @@ use App\Models\MWaSchedule;
 use App\Models\MWeeklyPlan;
 use App\Models\TrDailyPlanActivity;
 use App\Models\TrDailyTask;
+use App\Models\TrProjectAssignment;
 use App\Models\TrProjectStage;
 use App\Models\TrSubProject;
 use App\Models\TrSupervisorSubDept;
@@ -482,6 +483,23 @@ class DatabaseSeeder extends Seeder
                             'dtmInserted' => $now,
                         ]);
 
+                        // Sub-project assignments
+                        $subAssignees = match ($sub['name']) {
+                            'Vibe Coding' => [5, 9], // NRS, AHO
+                            'KIMI Agent' => [9, 10], // AHO, AMI
+                            'RPA Orange Workflow Automation' => [6, 7], // TGR, SNH
+                            default => [$p['user_id']],
+                        };
+                        foreach ($subAssignees as $assigneeId) {
+                            TrProjectAssignment::create([
+                                'intProject_ID' => $project->intProject_ID,
+                                'intSubProject_ID' => $subProject->intSubProject_ID,
+                                'intUser_ID' => $assigneeId,
+                                'txtInsertedBy' => 'seeder',
+                                'dtmInserted' => $now,
+                            ]);
+                        }
+
                         foreach ($sub['stages'] as $sIdx => [$step, $plan, $actual]) {
                             TrProjectStage::create([
                                 'intProjectStage_ID' => $nextStageId,
@@ -501,23 +519,42 @@ class DatabaseSeeder extends Seeder
                         $subProject->recalculateProgress();
                         $nextSubId++;
                     }
-                } elseif (! empty($p['stages'])) {
-                    $nextStageId = ($pId * 100) + 1;
-                    foreach ($p['stages'] as $sIdx => [$step, $plan, $actual]) {
-                        TrProjectStage::create([
-                            'intProjectStage_ID' => $nextStageId,
+                } else {
+                    // Single project assignments
+                    $assignees = [$p['user_id']];
+                    if ($pId === 1) {
+                        $assignees[] = 9; // Also assign AHO
+                    } elseif ($pId === 9) {
+                        $assignees[] = 13; // Also assign DDI
+                    }
+                    foreach ($assignees as $assigneeId) {
+                        TrProjectAssignment::create([
                             'intProject_ID' => $project->intProject_ID,
                             'intSubProject_ID' => null,
-                            'intProjectStageNumber' => $sIdx + 1,
-                            'txtProjectStageStep' => $step,
-                            'dtmProjectStageStartDate' => $startDate->copy()->addMonths($sIdx * 3),
-                            'dtmProjectStageEndDate' => $startDate->copy()->addMonths(($sIdx + 1) * 3),
-                            'floatProjectStagePlan' => $plan,
-                            'floatProjectStageActual' => $actual,
+                            'intUser_ID' => $assigneeId,
                             'txtInsertedBy' => 'seeder',
                             'dtmInserted' => $now,
                         ]);
-                        $nextStageId++;
+                    }
+
+                    if (! empty($p['stages'])) {
+                        $nextStageId = ($pId * 100) + 1;
+                        foreach ($p['stages'] as $sIdx => [$step, $plan, $actual]) {
+                            TrProjectStage::create([
+                                'intProjectStage_ID' => $nextStageId,
+                                'intProject_ID' => $project->intProject_ID,
+                                'intSubProject_ID' => null,
+                                'intProjectStageNumber' => $sIdx + 1,
+                                'txtProjectStageStep' => $step,
+                                'dtmProjectStageStartDate' => $startDate->copy()->addMonths($sIdx * 3),
+                                'dtmProjectStageEndDate' => $startDate->copy()->addMonths(($sIdx + 1) * 3),
+                                'floatProjectStagePlan' => $plan,
+                                'floatProjectStageActual' => $actual,
+                                'txtInsertedBy' => 'seeder',
+                                'dtmInserted' => $now,
+                            ]);
+                            $nextStageId++;
+                        }
                     }
                 }
 

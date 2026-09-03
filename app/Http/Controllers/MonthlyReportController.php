@@ -32,7 +32,7 @@ class MonthlyReportController extends Controller
         }
 
         if ($selectedEmployee) {
-            $query->where('intUser_ID', $selectedEmployee);
+            $query->forUser($selectedEmployee);
         }
 
         if ($selectedType) {

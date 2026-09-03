@@ -34,10 +34,12 @@ class ProfileController extends Controller
         $projects = MProject::with([
             'projectType',
             'subDepartment',
+            'assignments.user',
             'subProjects.stages',
+            'subProjects.assignments.user',
             'directStages',
         ])
-            ->where('intUser_ID', $user->intUser_ID)
+            ->forUser($user->intUser_ID)
             ->where('bitActive', true)
             ->orderBy('txtProjectName')
             ->get();

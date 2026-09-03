@@ -24,9 +24,22 @@
                         {{ $project->projectType?->txtProjectTypeCode ?? 'IPP' }}
                     </span>
                 </div>
-                <p class="text-xs text-gray-500 m-0 mt-0.5">
-                    {{ $project->txtProjectCode }} &bull; {{ $project->subDepartment?->txtSubDepartmentName ?? 'MDP' }} &bull; PIC: <strong class="text-gray-800">{{ $project->user?->txtEmployeeName ?? 'Unassigned' }}</strong>
-                </p>
+                <div class="text-xs text-gray-500 m-0 mt-1 flex items-center gap-2 flex-wrap">
+                    <span>{{ $project->txtProjectCode }}</span> &bull;
+                    <span>{{ $project->subDepartment?->txtSubDepartmentName ?? 'MDP' }}</span> &bull;
+                    <span class="font-bold text-gray-700">Pelaksana:</span>
+                    @php $allUsers = $project->allAssignedUsers(); @endphp
+                    @if ($allUsers->isNotEmpty())
+                    @foreach ($allUsers as $u)
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#009ca6] text-white text-[11px] font-bold shadow-2xs">
+                        <i class="fa-solid fa-user text-[9px]"></i>
+                        <span>{{ $u->txtEmployeeName }}</span>
+                    </span>
+                    @endforeach
+                    @else
+                    <strong class="text-gray-800">{{ $project->user?->txtEmployeeName ?? 'Unassigned' }}</strong>
+                    @endif
+                </div>
             </div>
         </div>
 
@@ -78,21 +91,42 @@
                 <i class="fa-solid fa-flag text-emerald-600"></i>
                 <span>Deliverable & Output</span>
             </h3>
-            <div class="p-4 rounded-2xl bg-gray-50 border border-gray-100 text-sm font-semibold text-gray-800">
-                {{ $project->txtDeliverable ?: 'Belum ada deliverable yang ditentukan.' }}
+            <div class="p-3.5 rounded-2xl bg-gray-50 border border-gray-100 text-xs text-gray-800 font-semibold leading-relaxed">
+                {{ $project->txtDeliverable ?: 'Belum ada deliverable spesifik yang didefinisikan.' }}
             </div>
             @if ($project->txtDescription)
-            <p class="text-xs text-gray-600 leading-relaxed">{{ $project->txtDescription }}</p>
+            <div>
+                <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">Deskripsi</span>
+                <p class="text-xs text-gray-600 leading-relaxed m-0">{{ $project->txtDescription }}</p>
+            </div>
             @endif
         </div>
 
         <div class="md:col-span-6 bg-white p-5 rounded-3xl border border-[#DDE5DD] shadow-xs space-y-3">
             <h3 class="text-xs font-black text-gray-900 uppercase tracking-wider m-0 flex items-center gap-2">
                 <i class="fa-solid fa-list-ol text-amber-500"></i>
-                <span>Target Skala Grade (1 s/d 5)</span>
+                <span>Target Skala Nilai KPI (1 - 5)</span>
             </h3>
-            <div class="p-4 rounded-2xl bg-amber-50/50 border border-amber-200 text-xs font-mono text-gray-800 whitespace-pre-line leading-relaxed">
-                {{ $project->txtTargetSkalaGrade ?: "1. 80%\n2. 85%\n3. 90%\n4. 95%\n5. 100%" }}
+
+            <div class="space-y-1.5">
+                @php
+                $grading = $project->targetSkalaGradeArray;
+                @endphp
+                @if (empty($grading))
+                <div class="p-3 text-center text-xs text-gray-400">Belum ada rubrik skala grade yang ditentukan.</div>
+                @else
+                @foreach ($grading as $item)
+                <div class="flex items-center gap-3 p-2 rounded-xl {{ ($project->intScore == $item['score']) ? 'bg-amber-50 border border-amber-300 font-bold text-amber-900' : 'bg-gray-50 border border-gray-100 text-gray-700' }} text-xs">
+                    <span class="w-6 h-6 rounded-lg {{ ($project->intScore == $item['score']) ? 'bg-amber-500 text-white' : 'bg-gray-200 text-gray-600' }} font-black flex items-center justify-center text-xs shrink-0">
+                        {{ $item['score'] }}
+                    </span>
+                    <span class="flex-1">{{ $item['text'] }}</span>
+                    @if ($project->intScore == $item['score'])
+                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-200 text-amber-900">Capai</span>
+                    @endif
+                </div>
+                @endforeach
+                @endif
             </div>
         </div>
     </div>
@@ -115,17 +149,17 @@
         </div>
     </div>
 
-    <!-- Sub-Projects (if Project with Sub Projects) -->
-    @if ($project->bitHasSubProject)
+    <!-- Multi Sub-Projects Breakdown (If Project Has Sub Projects) -->
+    @if ($project->bitHasSubProject && $project->subProjects->isNotEmpty())
     <div class="bg-white p-6 rounded-3xl border border-[#DDE5DD] shadow-xs space-y-4">
         <div class="flex items-center justify-between">
-            <div>
-                <h3 class="text-sm font-extrabold text-purple-900 m-0 flex items-center gap-2">
-                    <i class="fa-solid fa-layer-group text-purple-600"></i>
-                    <span>Daftar Sub Projects (Akumulasi Exposure)</span>
-                </h3>
-                <p class="text-xs text-gray-500 m-0">Exposure project utama diakumulasi berdasarkan bobot masing-masing sub project.</p>
-            </div>
+            <h3 class="text-sm font-extrabold text-gray-900 m-0 flex items-center gap-2">
+                <i class="fa-solid fa-layer-group text-purple-600"></i>
+                <span>Daftar Sub Projects ({{ $project->subProjects->count() }})</span>
+            </h3>
+            <span class="text-xs font-bold text-purple-700 bg-purple-50 px-3 py-1 rounded-xl border border-purple-200">
+                Total Sub Projects: {{ $project->subProjects->count() }}
+            </span>
         </div>
 
         <div class="overflow-x-auto">
@@ -133,6 +167,7 @@
                 <thead class="bg-purple-50/50 border-b border-purple-100 text-purple-900 font-bold uppercase">
                     <tr>
                         <th class="p-3">Nama Sub Project</th>
+                        <th class="p-3">Pelaksana (Assignment)</th>
                         <th class="p-3">Periode</th>
                         <th class="p-3 text-center">Bobot Sub (%)</th>
                         <th class="p-3 text-center">Tahapan S-Curve</th>
@@ -150,6 +185,18 @@
                             @if ($sub->txtDeliverable)
                             <p class="text-[11px] text-gray-500 m-0 mt-0.5"><strong class="text-gray-700">Output:</strong> {{ $sub->txtDeliverable }}</p>
                             @endif
+                        </td>
+                        <td class="p-3 max-w-[220px]">
+                            <div class="flex flex-wrap gap-1 items-center">
+                                @forelse ($sub->assignedUsers as $assignee)
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#009ca6] text-white text-[10px] font-bold shadow-2xs">
+                                    <i class="fa-solid fa-user text-[8px]"></i>
+                                    <span>{{ $assignee->txtEmployeeName }}</span>
+                                </span>
+                                @empty
+                                <span class="text-gray-400 italic text-[11px]">-</span>
+                                @endforelse
+                            </div>
                         </td>
                         <td class="p-3 text-gray-600 whitespace-nowrap">
                             <div class="flex items-center gap-1.5 text-xs">

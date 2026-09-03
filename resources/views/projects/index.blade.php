@@ -108,7 +108,7 @@
                         <th class="px-4 py-3.5 w-12 text-center">No</th>
                         <th class="px-4 py-3.5">Nama Project & Deliverable</th>
                         <th class="px-4 py-3.5">Tipe & Level</th>
-                        <th class="px-4 py-3.5">PIC Employee</th>
+                        <th class="px-4 py-3.5">PIC / Assignment</th>
                         <th class="px-4 py-3.5 text-center">Bobot</th>
                         <th class="px-4 py-3.5 text-center">Score</th>
                         <th class="px-4 py-3.5">Achievement</th>
@@ -143,9 +143,29 @@
                             </span>
                             <span class="block text-[11px] text-gray-500 font-medium mt-1">{{ $project->txtKpiLevel }}</span>
                         </td>
-                        <td class="px-4 py-3.5">
-                            <span class="font-bold text-gray-800 block">{{ $project->user?->txtEmployeeName ?? 'Unassigned' }}</span>
+                        <td class="px-4 py-3.5 max-w-[200px]">
+                            @php
+                            $assigned = $project->allAssignedUsers();
+                            @endphp
+                            @if ($assigned->isNotEmpty())
+                            <div class="flex flex-wrap gap-1 items-center">
+                                @foreach ($assigned->take(2) as $assignee)
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#009ca6] text-white text-[10px] font-bold shadow-2xs" title="{{ $assignee->txtEmployeeName }}">
+                                    <i class="fa-solid fa-user text-[8px]"></i>
+                                    <span class="truncate max-w-[110px]">{{ $assignee->txtEmployeeName }}</span>
+                                </span>
+                                @endforeach
+                                @if ($assigned->count() > 2)
+                                <span class="px-1.5 py-0.5 rounded-md bg-gray-100 text-gray-600 text-[10px] font-bold" title="{{ $assigned->skip(2)->pluck('txtEmployeeName')->join(', ') }}">
+                                    +{{ $assigned->count() - 2 }}
+                                </span>
+                                @endif
+                            </div>
+                            <span class="text-[10px] text-emerald-700 font-semibold block mt-1">{{ $project->subDepartment?->txtSubDepartmentCode ?? '-' }}</span>
+                            @else
+                            <span class="font-bold text-gray-800 block text-xs">{{ $project->user?->txtEmployeeName ?? 'Unassigned' }}</span>
                             <span class="text-[11px] text-emerald-700 font-semibold">{{ $project->subDepartment?->txtSubDepartmentCode ?? '-' }}</span>
+                            @endif
                         </td>
                         <td class="px-4 py-3.5 text-center font-extrabold text-gray-900 text-sm">
                             {{ $project->floatWeight }}

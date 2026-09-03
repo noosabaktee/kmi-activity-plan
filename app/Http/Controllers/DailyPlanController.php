@@ -99,7 +99,7 @@ class DailyPlanController extends Controller
 
         $targetUserId = $dailyPlan->intUser_ID ?: session('auth_user_id');
         $projects = MProject::active()
-            ->when($targetUserId, fn($q) => $q->where('intUser_ID', $targetUserId))
+            ->when($targetUserId, fn($q) => $q->forUser($targetUserId))
             ->orderBy('txtProjectName')
             ->get();
         $authUser = MUser::find(session('auth_user_id'));

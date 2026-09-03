@@ -153,7 +153,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (state.mode === 'employee') {
             const emp = employeeById(state.employeeId);
-            const empProjs = emp ? projects.filter((p) => String(p.employeeId) === String(emp.id)) : [];
+            const empProjs = emp ? projects.filter((p) => String(p.employeeId) === String(emp.id) || (Array.isArray(p.assignedEmployeeIds) && p.assignedEmployeeIds.includes(String(emp.id)))) : [];
             const agg = aggregateProjects(empProjs);
             return {
                 ...agg,
@@ -376,9 +376,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const avgAct = typeProjs.length ? round(typeProjs.reduce((s, p) => s + toNumber(p.actual), 0) / typeProjs.length) : 0;
             const card = document.createElement('button');
             card.type = 'button';
-            card.className = `w-full text-left p-3.5 rounded-2xl border transition cursor-pointer ${
-                state.mode === 'type' && state.typeKey === type.key ? 'border-[#006838] bg-emerald-50/40 shadow-xs' : 'border-gray-100 bg-gray-50 hover:bg-gray-100'
-            }`;
+            card.className = `w-full text-left p-3.5 rounded-2xl border transition cursor-pointer ${state.mode === 'type' && state.typeKey === type.key ? 'border-[#006838] bg-emerald-50/40 shadow-xs' : 'border-gray-100 bg-gray-50 hover:bg-gray-100'
+                }`;
             card.innerHTML = `
                 <div class="flex items-center justify-between mb-1">
                     <span class="text-xs font-black text-gray-900 flex items-center gap-1.5">
