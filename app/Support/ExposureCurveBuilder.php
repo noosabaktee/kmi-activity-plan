@@ -56,7 +56,7 @@ class ExposureCurveBuilder
             'generatedAt' => now()->format('d M Y H:i'),
             'projectTypes' => $typesData,
             'employees' => $employeesData,
-            'projects' => $projects->map(fn (MProject $project) => self::projectPayload($project, $typesData))->values()->all(),
+            'projects' => $projects->map(fn(MProject $project) => self::projectPayload($project, $typesData))->values()->all(),
         ];
     }
 
@@ -88,15 +88,25 @@ class ExposureCurveBuilder
                 foreach ($sub->stages as $st) {
                     $stages->push([
                         'number' => (int) $st->intProjectStageNumber,
+                        'sub_id' => $sub->intSubProject_ID,
+                        'sub_name' => $sub->txtSubProjectName,
                         'step' => "{$sub->txtSubProjectName} - {$st->txtProjectStageStep}",
                         'start' => $st->dtmProjectStageStartDate?->format('Y-m-d'),
                         'end' => $st->dtmProjectStageEndDate?->format('Y-m-d'),
                         'plan' => round($st->floatProjectStagePlan * $subWeightFactor, 2),
                         'actual' => round($st->floatProjectStageActual * $subWeightFactor, 2),
-                        'weight' => round($st->floatProjectStageWeight * $subWeightFactor, 2),
+                        'weight' => round(($st->floatProjectStageWeight ?? $st->floatProjectStagePlan) * $subWeightFactor, 2),
                     ]);
                 }
             }
+
+            // Order chronologically by start date, then assign sequential numbers
+            $stages = $stages->sortBy(function ($s) {
+                return $s['start'] ?? '9999-12-31';
+            })->values()->map(function ($s, $idx) {
+                $s['number'] = $idx + 1;
+                return $s;
+            });
         } else {
             foreach ($project->directStages as $st) {
                 $stages->push([
@@ -106,7 +116,7 @@ class ExposureCurveBuilder
                     'end' => $st->dtmProjectStageEndDate?->format('Y-m-d'),
                     'plan' => (float) $st->floatProjectStagePlan,
                     'actual' => (float) $st->floatProjectStageActual,
-                    'weight' => (float) $st->floatProjectStageWeight,
+                    'weight' => (float) ($st->floatProjectStageWeight ?? $st->floatProjectStagePlan),
                 ]);
             }
         }
@@ -131,13 +141,27 @@ class ExposureCurveBuilder
             'employeeName' => $project->user?->txtEmployeeName ?? 'Unassigned',
             'subDeptCode' => $project->subDepartment?->txtSubDepartmentCode ?? 'MDP',
             'stages' => $stages->sortBy('number')->values()->all(),
-            'subProjects' => $project->bitHasSubProject ? $project->subProjects->map(fn ($sp) => [
+            'subProjects' => $project->bitHasSubProject ? $project->subProjects->map(fn($sp) => [
                 'id' => $sp->intSubProject_ID,
                 'name' => $sp->txtSubProjectName,
+                'deliverable' => $sp->txtDeliverable,
+                'targetGrade' => $sp->txtTargetSkalaGrade,
+                'achievement' => $sp->txtAchievement,
+                'startDate' => $sp->dtmStartDate?->format('Y-m-d'),
+                'endDate' => $sp->dtmEndDate?->format('Y-m-d'),
                 'weight' => (float) $sp->floatWeight,
                 'progress' => (float) $sp->floatProgress,
                 'score' => $sp->intScore,
                 'stageCount' => $sp->stages->count(),
+                'stages' => $sp->stages->map(fn($st) => [
+                    'id' => $st->intProjectStage_ID,
+                    'number' => (int) $st->intProjectStageNumber,
+                    'step' => $st->txtProjectStageStep,
+                    'start' => $st->dtmProjectStageStartDate?->format('Y-m-d'),
+                    'end' => $st->dtmProjectStageEndDate?->format('Y-m-d'),
+                    'plan' => (float) $st->floatProjectStagePlan,
+                    'actual' => (float) $st->floatProjectStageActual,
+                ])->values()->all(),
             ])->values()->all() : [],
         ];
     }

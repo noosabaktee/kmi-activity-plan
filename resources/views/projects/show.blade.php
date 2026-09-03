@@ -133,9 +133,9 @@
                 <thead class="bg-purple-50/50 border-b border-purple-100 text-purple-900 font-bold uppercase">
                     <tr>
                         <th class="p-3">Nama Sub Project</th>
+                        <th class="p-3">Periode</th>
                         <th class="p-3 text-center">Bobot Sub (%)</th>
-                        <th class="p-3 text-center">Score (1-5)</th>
-                        <th class="p-3">Achievement</th>
+                        <th class="p-3 text-center">Tahapan S-Curve</th>
                         <th class="p-3">Progress</th>
                     </tr>
                 </thead>
@@ -148,20 +148,22 @@
                                 <span>{{ $sub->txtSubProjectName }}</span>
                             </div>
                             @if ($sub->txtDeliverable)
-                            <p class="text-[11px] text-gray-500 m-0 mt-0.5">{{ $sub->txtDeliverable }}</p>
+                            <p class="text-[11px] text-gray-500 m-0 mt-0.5"><strong class="text-gray-700">Output:</strong> {{ $sub->txtDeliverable }}</p>
                             @endif
+                        </td>
+                        <td class="p-3 text-gray-600 whitespace-nowrap">
+                            <div class="flex items-center gap-1.5 text-xs">
+                                <i class="fa-regular fa-calendar text-purple-400"></i>
+                                <span>{{ $sub->dtmStartDate?->format('d M Y') ?? '-' }} s/d {{ $sub->dtmEndDate?->format('d M Y') ?? '-' }}</span>
+                            </div>
                         </td>
                         <td class="p-3 text-center font-extrabold text-gray-800">{{ $sub->floatWeight }}%</td>
                         <td class="p-3 text-center">
-                            @if ($sub->intScore)
-                            <span class="inline-flex items-center justify-center w-6 h-6 rounded-lg bg-amber-100 text-amber-900 font-bold text-xs">
-                                {{ $sub->intScore }}
+                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-purple-100 text-purple-800">
+                                <i class="fa-solid fa-chart-gantt text-[10px]"></i>
+                                <span>{{ $sub->stages->count() }} Stages</span>
                             </span>
-                            @else
-                            <span class="text-gray-400">-</span>
-                            @endif
                         </td>
-                        <td class="p-3 font-semibold text-gray-700">{{ $sub->txtAchievement ?: '-' }}</td>
                         <td class="p-3 min-w-[140px]">
                             <div class="flex items-center justify-between text-[10px] font-bold mb-1">
                                 <span class="text-gray-500">Progress</span>

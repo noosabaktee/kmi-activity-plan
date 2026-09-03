@@ -90,6 +90,159 @@ test('it creates a new single project with stages', function () {
     ]);
 });
 
+test('it creates a project with sub projects containing dates and direct stages', function () {
+    $user = MUser::where('txtRole', 'Head')->first();
+    $subDept = MSubDepartment::first();
+    $type = MProjectType::first();
+
+    $response = $this->withSession(['auth_user_id' => $user->intUser_ID])
+        ->post(route('projects.store'), [
+            'bitHasSubProject' => '1',
+            'txtProjectName' => 'AI Multi-Agent Ecosystem',
+            'txtProjectCode' => 'PRJ-AI-001',
+            'intProjectType_ID' => $type->intProjectType_ID,
+            'intSubDepartment_ID' => $subDept->intSubDepartment_ID,
+            'intUser_ID' => $user->intUser_ID,
+            'txtKpiLevel' => 'Individu',
+            'floatWeight' => 25,
+            'dtmProjectStartDate' => '2026-01-01',
+            'dtmProjectEndDate' => '2026-12-31',
+            'sub_projects' => [
+                [
+                    'name' => 'Agent Sub 1',
+                    'weight' => 50,
+                    'start_date' => '2026-01-15',
+                    'end_date' => '2026-06-30',
+                    'deliverable' => 'Core Bot',
+                    'stages' => [
+                        ['step' => 'Planning Sub 1', 'start' => '2026-01-15', 'end' => '2026-03-31', 'plan' => 50, 'actual' => 50],
+                        ['step' => 'Execution Sub 1', 'start' => '2026-04-01', 'end' => '2026-06-30', 'plan' => 50, 'actual' => 25],
+                    ],
+                ],
+                [
+                    'name' => 'Agent Sub 2',
+                    'weight' => 50,
+                    'start_date' => '2026-07-01',
+                    'end_date' => '2026-12-20',
+                    'deliverable' => 'Web App Bot',
+                    'stages' => [
+                        ['step' => 'Execution Sub 2', 'start' => '2026-07-01', 'end' => '2026-12-20', 'plan' => 100, 'actual' => 50],
+                    ],
+                ],
+            ],
+        ]);
+
+    $response->assertRedirect(route('projects.index'));
+
+    $project = MProject::where('txtProjectName', 'AI Multi-Agent Ecosystem')->first();
+    expect($project)->not->toBeNull();
+    expect($project->bitHasSubProject)->toBeTrue();
+
+    $this->assertDatabaseHas('trSubProject', [
+        'intProject_ID' => $project->intProject_ID,
+        'txtSubProjectName' => 'Agent Sub 1',
+        'floatWeight' => 50,
+        'dtmStartDate' => '2026-01-15 00:00:00',
+        'dtmEndDate' => '2026-06-30 00:00:00',
+    ]);
+
+    $sub1 = TrSubProject::where('intProject_ID', $project->intProject_ID)->where('txtSubProjectName', 'Agent Sub 1')->first();
+    expect($sub1->stages)->toHaveCount(2);
+    expect($sub1->floatProgress)->toBe(75.0); // (50 + 25) / 100 * 100 = 75%
+
+    $this->assertDatabaseHas('trProjectStage', [
+        'intProject_ID' => $project->intProject_ID,
+        'intSubProject_ID' => $sub1->intSubProject_ID,
+        'txtProjectStageStep' => 'Planning Sub 1',
+        'dtmProjectStageStartDate' => '2026-01-15 00:00:00',
+    ]);
+});
+
+test('it updates an existing project with sub projects, updating dates and stages', function () {
+    $user = MUser::where('txtRole', 'Head')->first();
+    $subDept = MSubDepartment::first();
+    $type = MProjectType::first();
+
+    $project = MProject::create([
+        'intDepartment_ID' => 1,
+        'intSubDepartment_ID' => $subDept->intSubDepartment_ID,
+        'intProjectType_ID' => $type->intProjectType_ID,
+        'intUser_ID' => $user->intUser_ID,
+        'txtProjectCode' => 'PRJ-UPDATE-001',
+        'txtProjectName' => 'Initial Project To Update',
+        'txtKpiLevel' => 'Individu',
+        'floatWeight' => 30,
+        'bitHasSubProject' => true,
+        'bitActive' => true,
+        'txtInsertedBy' => 'system',
+        'dtmInserted' => now(),
+    ]);
+
+    $sub = TrSubProject::create([
+        'intProject_ID' => $project->intProject_ID,
+        'txtSubProjectName' => 'Sub Alpha',
+        'floatWeight' => 100,
+        'txtStatus' => 'In Progress',
+        'txtInsertedBy' => 'system',
+        'dtmInserted' => now(),
+    ]);
+
+    $response = $this->withSession(['auth_user_id' => $user->intUser_ID])
+        ->put(route('projects.update', $project), [
+            'bitHasSubProject' => '1',
+            'txtProjectName' => 'Updated Project Name',
+            'txtProjectCode' => 'PRJ-UPDATE-001',
+            'intProjectType_ID' => $type->intProjectType_ID,
+            'intSubDepartment_ID' => $subDept->intSubDepartment_ID,
+            'intUser_ID' => $user->intUser_ID,
+            'txtKpiLevel' => 'Individu',
+            'floatWeight' => 30,
+            'sub_projects' => [
+                [
+                    'id' => $sub->intSubProject_ID,
+                    'name' => 'Sub Alpha Updated',
+                    'weight' => 60,
+                    'score' => 5,
+                    'start_date' => '2026-02-01',
+                    'end_date' => '2026-08-31',
+                    'stages' => [
+                        ['step' => 'Sprint 1', 'start' => '2026-02-01', 'end' => '2026-04-30', 'plan' => 50, 'actual' => 50],
+                        ['step' => 'Sprint 2', 'start' => '2026-05-01', 'end' => '2026-08-31', 'plan' => 50, 'actual' => 50],
+                    ],
+                ],
+                [
+                    'name' => 'Sub Beta Brand New',
+                    'weight' => 40,
+                    'score' => 4,
+                    'start_date' => '2026-09-01',
+                    'end_date' => '2026-12-31',
+                    'stages' => [
+                        ['step' => 'Rollout', 'start' => '2026-09-01', 'end' => '2026-12-31', 'plan' => 100, 'actual' => 20],
+                    ],
+                ],
+            ],
+        ]);
+
+    $response->assertRedirect(route('projects.show', $project));
+
+    $this->assertDatabaseHas('trSubProject', [
+        'intSubProject_ID' => $sub->intSubProject_ID,
+        'txtSubProjectName' => 'Sub Alpha Updated',
+        'floatWeight' => 60,
+        'dtmStartDate' => '2026-02-01 00:00:00',
+        'dtmEndDate' => '2026-08-31 00:00:00',
+    ]);
+
+    $this->assertDatabaseHas('trSubProject', [
+        'intProject_ID' => $project->intProject_ID,
+        'txtSubProjectName' => 'Sub Beta Brand New',
+        'floatWeight' => 40,
+    ]);
+
+    $sub->refresh();
+    expect($sub->floatProgress)->toBe(100.0);
+});
+
 test('it calculates exposure curve points for API and dashboard', function () {
     $response = $this->get('/api/v1/exposure');
 

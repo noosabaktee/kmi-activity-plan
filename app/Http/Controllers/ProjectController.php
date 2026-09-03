@@ -120,7 +120,14 @@ class ProjectController extends Controller
             'sub_projects.*.score' => ['nullable', 'integer', 'min:1', 'max:5'],
             'sub_projects.*.achievement' => ['nullable', 'string'],
             'sub_projects.*.weight' => ['nullable', 'numeric', 'min:0'],
+            'sub_projects.*.start_date' => ['nullable', 'date'],
+            'sub_projects.*.end_date' => ['nullable', 'date'],
             'sub_projects.*.stages' => ['nullable', 'array'],
+            'sub_projects.*.stages.*.step' => ['nullable', 'string', 'max:255'],
+            'sub_projects.*.stages.*.start' => ['nullable', 'date'],
+            'sub_projects.*.stages.*.end' => ['nullable', 'date'],
+            'sub_projects.*.stages.*.plan' => ['nullable', 'numeric', 'min:0'],
+            'sub_projects.*.stages.*.actual' => ['nullable', 'numeric', 'min:0'],
         ]);
 
         $hasSubProject = $request->boolean('bitHasSubProject');
@@ -158,6 +165,9 @@ class ProjectController extends Controller
                         continue;
                     }
 
+                    $subStartDate = ! empty($subData['start_date']) ? $subData['start_date'] : $project->dtmProjectStartDate;
+                    $subEndDate = ! empty($subData['end_date']) ? $subData['end_date'] : $project->dtmProjectEndDate;
+
                     $subProject = TrSubProject::create([
                         'intProject_ID' => $project->intProject_ID,
                         'txtSubProjectName' => $subData['name'],
@@ -167,8 +177,8 @@ class ProjectController extends Controller
                         'txtAchievement' => $subData['achievement'] ?? null,
                         'floatWeight' => (float) ($subData['weight'] ?? 0),
                         'floatProgress' => 0,
-                        'dtmStartDate' => $project->dtmProjectStartDate,
-                        'dtmEndDate' => $project->dtmProjectEndDate,
+                        'dtmStartDate' => $subStartDate,
+                        'dtmEndDate' => $subEndDate,
                         'txtStatus' => 'In Progress',
                         'txtInsertedBy' => $authUser->txtEmail ?? 'system',
                         'dtmInserted' => $now,
@@ -184,8 +194,8 @@ class ProjectController extends Controller
                                 'intSubProject_ID' => $subProject->intSubProject_ID,
                                 'intProjectStageNumber' => $sIdx + 1,
                                 'txtProjectStageStep' => $stData['step'],
-                                'dtmProjectStageStartDate' => $stData['start'] ?? $project->dtmProjectStartDate,
-                                'dtmProjectStageEndDate' => $stData['end'] ?? $project->dtmProjectEndDate,
+                                'dtmProjectStageStartDate' => ! empty($stData['start']) ? $stData['start'] : $subStartDate,
+                                'dtmProjectStageEndDate' => ! empty($stData['end']) ? $stData['end'] : $subEndDate,
                                 'floatProjectStagePlan' => (float) ($stData['plan'] ?? 0),
                                 'floatProjectStageActual' => (float) ($stData['actual'] ?? 0),
                                 'txtInsertedBy' => $authUser->txtEmail ?? 'system',
@@ -267,6 +277,21 @@ class ProjectController extends Controller
             'txtStatus' => ['nullable', 'string'],
             'stages' => ['nullable', 'array'],
             'sub_projects' => ['nullable', 'array'],
+            'sub_projects.*.id' => ['nullable', 'integer'],
+            'sub_projects.*.name' => ['nullable', 'string', 'max:255'],
+            'sub_projects.*.deliverable' => ['nullable', 'string'],
+            'sub_projects.*.target_grade' => ['nullable', 'string'],
+            'sub_projects.*.score' => ['nullable', 'integer', 'min:1', 'max:5'],
+            'sub_projects.*.achievement' => ['nullable', 'string'],
+            'sub_projects.*.weight' => ['nullable', 'numeric', 'min:0'],
+            'sub_projects.*.start_date' => ['nullable', 'date'],
+            'sub_projects.*.end_date' => ['nullable', 'date'],
+            'sub_projects.*.stages' => ['nullable', 'array'],
+            'sub_projects.*.stages.*.step' => ['nullable', 'string', 'max:255'],
+            'sub_projects.*.stages.*.start' => ['nullable', 'date'],
+            'sub_projects.*.stages.*.end' => ['nullable', 'date'],
+            'sub_projects.*.stages.*.plan' => ['nullable', 'numeric', 'min:0'],
+            'sub_projects.*.stages.*.actual' => ['nullable', 'numeric', 'min:0'],
         ]);
 
         $hasSubProject = $request->boolean('bitHasSubProject');
@@ -307,6 +332,9 @@ class ProjectController extends Controller
                             continue;
                         }
 
+                        $subStartDate = ! empty($subData['start_date']) ? $subData['start_date'] : $project->dtmProjectStartDate;
+                        $subEndDate = ! empty($subData['end_date']) ? $subData['end_date'] : $project->dtmProjectEndDate;
+
                         $subId = ! empty($subData['id']) ? (int) $subData['id'] : null;
                         if ($subId && $existingSub = TrSubProject::where('intProject_ID', $project->intProject_ID)->find($subId)) {
                             $existingSub->update([
@@ -316,6 +344,8 @@ class ProjectController extends Controller
                                 'intScore' => ! empty($subData['score']) ? (int) $subData['score'] : null,
                                 'txtAchievement' => $subData['achievement'] ?? null,
                                 'floatWeight' => (float) ($subData['weight'] ?? 0),
+                                'dtmStartDate' => $subStartDate,
+                                'dtmEndDate' => $subEndDate,
                             ]);
                             $subProject = $existingSub;
                         } else {
@@ -328,8 +358,8 @@ class ProjectController extends Controller
                                 'txtAchievement' => $subData['achievement'] ?? null,
                                 'floatWeight' => (float) ($subData['weight'] ?? 0),
                                 'floatProgress' => 0,
-                                'dtmStartDate' => $project->dtmProjectStartDate,
-                                'dtmEndDate' => $project->dtmProjectEndDate,
+                                'dtmStartDate' => $subStartDate,
+                                'dtmEndDate' => $subEndDate,
                                 'txtStatus' => 'In Progress',
                                 'txtInsertedBy' => $authUser->txtEmail ?? 'system',
                                 'dtmInserted' => $now,
@@ -349,8 +379,8 @@ class ProjectController extends Controller
                                     'intSubProject_ID' => $subProject->intSubProject_ID,
                                     'intProjectStageNumber' => $sIdx + 1,
                                     'txtProjectStageStep' => $stData['step'],
-                                    'dtmProjectStageStartDate' => $stData['start'] ?? $project->dtmProjectStartDate,
-                                    'dtmProjectStageEndDate' => $stData['end'] ?? $project->dtmProjectEndDate,
+                                    'dtmProjectStageStartDate' => ! empty($stData['start']) ? $stData['start'] : $subStartDate,
+                                    'dtmProjectStageEndDate' => ! empty($stData['end']) ? $stData['end'] : $subEndDate,
                                     'floatProjectStagePlan' => (float) ($stData['plan'] ?? 0),
                                     'floatProjectStageActual' => (float) ($stData['actual'] ?? 0),
                                     'txtInsertedBy' => $authUser->txtEmail ?? 'system',
