@@ -41,7 +41,7 @@
 
     <!-- Filters & Search Toolbar -->
     <div class="bg-white p-4 rounded-2xl border border-[#DDE5DD] shadow-xs">
-        <form method="GET" action="{{ route('projects.index') }}" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3">
+        <form method="GET" action="{{ route('projects.index') }}" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
             <div>
                 <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Tipe Project</label>
                 <select name="type" onchange="this.form.submit()" class="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs focus:border-[#006838] outline-none">
@@ -49,6 +49,18 @@
                     @foreach ($projectTypes as $pt)
                     <option value="{{ $pt->intProjectType_ID }}" {{ request('type') == $pt->intProjectType_ID ? 'selected' : '' }}>
                         {{ $pt->txtProjectTypeCode }} - {{ $pt->txtProjectTypeName }}
+                    </option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Skillset</label>
+                <select name="skillset" onchange="this.form.submit()" class="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs focus:border-[#006838] outline-none">
+                    <option value="">Semua Skillset</option>
+                    @foreach ($skillsets as $sk)
+                    <option value="{{ $sk->intSkillset_ID }}" {{ request('skillset') == $sk->intSkillset_ID ? 'selected' : '' }}>
+                        {{ $sk->txtSkillsetName }}
                     </option>
                     @endforeach
                 </select>
@@ -141,6 +153,14 @@
                             <span class="px-2 py-0.5 rounded-full text-[10px] font-bold text-white" style="background-color: {{ $project->projectType?->txtColor ?? '#006838' }}">
                                 {{ $project->projectType?->txtProjectTypeCode ?? 'IPP' }}
                             </span>
+                            @if ($project->skillset)
+                            <div class="mt-1">
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-white font-bold text-[9px] shadow-2xs" style="background-color: {{ $project->skillset->txtBadgeColor ?: '#006838' }}" title="{{ $project->skillset->txtSkillsetName }}">
+                                    <i class="{{ $project->skillset->txtIcon ?: 'fa-solid fa-code' }} text-[8px]"></i>
+                                    <span class="truncate max-w-[120px]">{{ $project->skillset->txtSkillsetName }}</span>
+                                </span>
+                            </div>
+                            @endif
                             <span class="block text-[11px] text-gray-500 font-medium mt-1">{{ $project->txtKpiLevel }}</span>
                         </td>
                         <td class="px-4 py-3.5 max-w-[200px]">

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\MDepartment;
 use App\Models\MProject;
 use App\Models\MProjectType;
+use App\Models\MSkillset;
 use App\Models\MSubDepartment;
 use App\Models\MUser;
 use App\Models\TrProjectAssignment;
@@ -27,6 +28,7 @@ class ProjectController extends Controller
         $query = MProject::with([
             'subDepartment',
             'projectType',
+            'skillset',
             'user',
             'assignments.user',
             'subProjects.stages',
@@ -42,6 +44,10 @@ class ProjectController extends Controller
         // Filters
         if ($request->filled('type')) {
             $query->where('intProjectType_ID', $request->input('type'));
+        }
+
+        if ($request->filled('skillset')) {
+            $query->where('intSkillset_ID', $request->input('skillset'));
         }
 
         if ($request->filled('subdept')) {
@@ -67,6 +73,7 @@ class ProjectController extends Controller
 
         $projects = $query->orderBy('txtProjectName')->get();
         $projectTypes = MProjectType::where('bitActive', true)->get();
+        $skillsets = MSkillset::where('bitActive', true)->orderBy('txtSkillsetName')->get();
         $subDepartments = MSubDepartment::where('intDepartment_ID', $departmentId)->where('bitActive', true)->get();
         $employees = MUser::where('bitActive', true)->where('intDepartment_ID', $departmentId)->get();
 
@@ -78,7 +85,7 @@ class ProjectController extends Controller
             'totalWeight' => $projects->sum('floatWeight'),
         ];
 
-        return view('projects.index', compact('projects', 'projectTypes', 'subDepartments', 'employees', 'summary', 'authUser'));
+        return view('projects.index', compact('projects', 'projectTypes', 'skillsets', 'subDepartments', 'employees', 'summary', 'authUser'));
     }
 
     public function create(): View
@@ -87,10 +94,11 @@ class ProjectController extends Controller
         $departmentId = $authUser->intDepartment_ID ?: 1;
 
         $projectTypes = MProjectType::where('bitActive', true)->get();
+        $skillsets = MSkillset::where('bitActive', true)->orderBy('txtSkillsetName')->get();
         $subDepartments = MSubDepartment::where('intDepartment_ID', $departmentId)->where('bitActive', true)->get();
         $employees = MUser::where('bitActive', true)->where('intDepartment_ID', $departmentId)->get();
 
-        return view('projects.create', compact('projectTypes', 'subDepartments', 'employees', 'authUser'));
+        return view('projects.create', compact('projectTypes', 'skillsets', 'subDepartments', 'employees', 'authUser'));
     }
 
     public function store(Request $request): RedirectResponse
@@ -101,6 +109,7 @@ class ProjectController extends Controller
             'txtProjectName' => ['required', 'string', 'max:255'],
             'txtProjectCode' => ['nullable', 'string', 'max:50'],
             'intProjectType_ID' => ['required', 'exists:mProjectType,intProjectType_ID'],
+            'intSkillset_ID' => ['nullable', 'exists:mSkillset,intSkillset_ID'],
             'intSubDepartment_ID' => ['nullable', 'exists:mSubDepartment,intSubDepartment_ID'],
             'intUser_ID' => ['nullable', 'exists:mUser,intUser_ID'],
             'assignments' => ['nullable', 'array'],
@@ -157,6 +166,7 @@ class ProjectController extends Controller
                 'intDepartment_ID' => $authUser->intDepartment_ID ?: 1,
                 'intSubDepartment_ID' => $validated['intSubDepartment_ID'] ?? $authUser->intSubDepartment_ID,
                 'intProjectType_ID' => $validated['intProjectType_ID'],
+                'intSkillset_ID' => $validated['intSkillset_ID'] ?? null,
                 'intUser_ID' => $intUserId,
                 'txtProjectCode' => !empty($validated['txtProjectCode']) ? $validated['txtProjectCode'] : ('PRJ-' . date('Y') . '-' . str_pad((MProject::max('intProject_ID') ?? 0) + 1, 3, '0', STR_PAD_LEFT)),
                 'txtProjectName' => $validated['txtProjectName'],
@@ -289,6 +299,7 @@ class ProjectController extends Controller
             'department',
             'subDepartment',
             'projectType',
+            'skillset',
             'user',
             'assignments.user',
             'subProjects.stages',
@@ -308,16 +319,18 @@ class ProjectController extends Controller
         $departmentId = $authUser->intDepartment_ID ?: 1;
 
         $project->load([
+            'skillset',
             'assignments.user',
             'subProjects.stages',
             'subProjects.assignments.user',
             'directStages',
         ]);
         $projectTypes = MProjectType::where('bitActive', true)->get();
+        $skillsets = MSkillset::where('bitActive', true)->orderBy('txtSkillsetName')->get();
         $subDepartments = MSubDepartment::where('intDepartment_ID', $departmentId)->where('bitActive', true)->get();
         $employees = MUser::where('bitActive', true)->where('intDepartment_ID', $departmentId)->get();
 
-        return view('projects.edit', compact('project', 'projectTypes', 'subDepartments', 'employees', 'authUser'));
+        return view('projects.edit', compact('project', 'projectTypes', 'skillsets', 'subDepartments', 'employees', 'authUser'));
     }
 
     public function update(Request $request, MProject $project): RedirectResponse
@@ -328,6 +341,7 @@ class ProjectController extends Controller
             'txtProjectName' => ['required', 'string', 'max:255'],
             'txtProjectCode' => ['nullable', 'string', 'max:50'],
             'intProjectType_ID' => ['required', 'exists:mProjectType,intProjectType_ID'],
+            'intSkillset_ID' => ['nullable', 'exists:mSkillset,intSkillset_ID'],
             'intSubDepartment_ID' => ['nullable', 'exists:mSubDepartment,intSubDepartment_ID'],
             'intUser_ID' => ['nullable', 'exists:mUser,intUser_ID'],
             'assignments' => ['nullable', 'array'],
@@ -377,6 +391,7 @@ class ProjectController extends Controller
             $project->update([
                 'intSubDepartment_ID' => $validated['intSubDepartment_ID'] ?? $project->intSubDepartment_ID,
                 'intProjectType_ID' => $validated['intProjectType_ID'],
+                'intSkillset_ID' => $validated['intSkillset_ID'] ?? null,
                 'intUser_ID' => $intUserId,
                 'txtProjectCode' => $validated['txtProjectCode'] ?? $project->txtProjectCode,
                 'txtProjectName' => $validated['txtProjectName'],

@@ -3,6 +3,7 @@
 use App\Models\MDepartment;
 use App\Models\MProject;
 use App\Models\MProjectType;
+use App\Models\MSkillset;
 use App\Models\MSubDepartment;
 use App\Models\MUser;
 use App\Models\MWeeklyPlan;
@@ -634,4 +635,116 @@ test('it manages WA scheduler with day select, two-tier target, and API settings
         'txtTargetRole' => 'Employee',
         'intDepartment_ID' => $dept->intDepartment_ID,
     ]);
+});
+
+test('it displays skillsets in master data and allows adding and updating a skillset', function () {
+    $head = MUser::where('txtRole', 'Head')->first();
+
+    // 1. Visit master data skillsets tab
+    $response = $this->withSession(['auth_user_id' => $head->intUser_ID])
+        ->get(route('master.index', ['tab' => 'skillsets']));
+
+    $response->assertStatus(200);
+    $response->assertSee('Web Development');
+    $response->assertSee('AI & Computer Vision');
+    $response->assertSee('Embedded Systems & IoT Data Acquisition');
+
+    // 2. Add new skillset
+    $storeResponse = $this->withSession(['auth_user_id' => $head->intUser_ID])
+        ->post(route('master.skillsets.store'), [
+            'txtSkillsetName' => 'Quantum Computing & Simulation',
+            'txtDescription' => 'Riset komputasi kuantum untuk optimasi manufaktur.',
+            'txtBadgeColor' => '#4C1D95',
+            'txtIcon' => 'fa-solid fa-atom',
+        ]);
+
+    $storeResponse->assertRedirect(route('master.index', ['tab' => 'skillsets']));
+    $this->assertDatabaseHas('mSkillset', [
+        'txtSkillsetName' => 'Quantum Computing & Simulation',
+        'txtBadgeColor' => '#4C1D95',
+    ]);
+
+    // 3. Update skillset
+    $created = MSkillset::where('txtSkillsetName', 'Quantum Computing & Simulation')->first();
+    $updateResponse = $this->withSession(['auth_user_id' => $head->intUser_ID])
+        ->put(route('master.skillsets.update', $created), [
+            'txtSkillsetName' => 'Advanced Quantum Computing',
+            'txtDescription' => 'Updated deskripsi komputasi kuantum.',
+            'txtBadgeColor' => '#581C87',
+            'txtIcon' => 'fa-solid fa-atom',
+        ]);
+
+    $updateResponse->assertRedirect(route('master.index', ['tab' => 'skillsets']));
+    $this->assertDatabaseHas('mSkillset', [
+        'intSkillset_ID' => $created->intSkillset_ID,
+        'txtSkillsetName' => 'Advanced Quantum Computing',
+    ]);
+});
+
+test('it allows creating and editing a main project with a skillset from master data', function () {
+    $head = MUser::where('txtRole', 'Head')->first();
+    $projectType = MProjectType::first();
+    $subDept = MSubDepartment::first();
+    $skillset = MSkillset::where('txtSkillsetName', 'Web Development')->first();
+
+    // 1. Open create page and see skillset
+    $createPage = $this->withSession(['auth_user_id' => $head->intUser_ID])
+        ->get(route('projects.create'));
+
+    $createPage->assertStatus(200);
+    $createPage->assertSee('Skillset Utama Project');
+    $createPage->assertSee('Web Development');
+
+    // 2. Store project with skillset
+    $storeResponse = $this->withSession(['auth_user_id' => $head->intUser_ID])
+        ->post(route('projects.store'), [
+            'txtProjectName' => 'Project Portal Web Kalbe Test',
+            'txtProjectCode' => 'PRJ-TEST-WEB-001',
+            'intProjectType_ID' => $projectType->intProjectType_ID,
+            'intSubDepartment_ID' => $subDept->intSubDepartment_ID,
+            'intSkillset_ID' => $skillset->intSkillset_ID,
+            'txtKpiLevel' => 'Individu',
+            'floatWeight' => 20,
+            'bitHasSubProject' => false,
+            'stages' => [
+                [
+                    'step' => 'Tahap Analisis',
+                    'start' => '2026-01-01',
+                    'end' => '2026-03-31',
+                    'plan' => 25,
+                    'actual' => 25,
+                ],
+            ],
+        ]);
+
+    $storeResponse->assertRedirect(route('projects.index'));
+
+    $project = MProject::where('txtProjectCode', 'PRJ-TEST-WEB-001')->first();
+    $this->assertNotNull($project);
+    $this->assertEquals($skillset->intSkillset_ID, $project->intSkillset_ID);
+    $this->assertEquals('Web Development', $project->skillset->txtSkillsetName);
+
+    // 3. View detail page and check skillset badge
+    $showPage = $this->withSession(['auth_user_id' => $head->intUser_ID])
+        ->get(route('projects.show', $project));
+
+    $showPage->assertStatus(200);
+    $showPage->assertSee('Web Development');
+
+    // 4. Update project to change skillset
+    $newSkillset = MSkillset::where('txtSkillsetName', 'AI & Computer Vision')->first();
+    $updateResponse = $this->withSession(['auth_user_id' => $head->intUser_ID])
+        ->put(route('projects.update', $project), [
+            'txtProjectName' => 'Project Portal Web Kalbe Test (Migrated to AI)',
+            'txtProjectCode' => 'PRJ-TEST-WEB-001',
+            'intProjectType_ID' => $projectType->intProjectType_ID,
+            'intSubDepartment_ID' => $subDept->intSubDepartment_ID,
+            'intSkillset_ID' => $newSkillset->intSkillset_ID,
+            'txtKpiLevel' => 'Individu',
+            'floatWeight' => 25,
+            'bitHasSubProject' => false,
+        ]);
+
+    $updateResponse->assertRedirect(route('projects.show', $project));
+    $this->assertEquals($newSkillset->intSkillset_ID, $project->fresh()->intSkillset_ID);
 });

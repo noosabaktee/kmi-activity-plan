@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\MDepartment;
 use App\Models\MProjectType;
+use App\Models\MSkillset;
 use App\Models\MSubDepartment;
 use App\Models\MUser;
 use App\Models\TrSupervisorSubDept;
@@ -21,6 +22,7 @@ class MasterDataController extends Controller
         $departments = MDepartment::withCount(['subDepartments', 'users', 'projects'])->active()->get();
         $subDepartments = MSubDepartment::with(['department'])->withCount(['users', 'projects'])->active()->get();
         $projectTypes = MProjectType::withCount(['projects'])->active()->get();
+        $skillsets = MSkillset::withCount(['projects'])->active()->orderBy('txtSkillsetName')->get();
         $users = MUser::with(['department', 'subDepartment', 'supervisedSubDepartments'])->active()->orderBy('txtRole')->orderBy('txtEmployeeName')->get();
 
         return view('master.index', [
@@ -28,6 +30,7 @@ class MasterDataController extends Controller
             'departments' => $departments,
             'subDepartments' => $subDepartments,
             'projectTypes' => $projectTypes,
+            'skillsets' => $skillsets,
             'users' => $users,
         ]);
     }
@@ -94,6 +97,68 @@ class MasterDataController extends Controller
         ]);
 
         return redirect()->route('master.index', ['tab' => 'project_types'])->with('success', 'Tipe Project KPI berhasil ditambahkan.');
+    }
+
+    public function storeSkillset(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'txtSkillsetName' => ['required', 'string', 'max:150', 'unique:mSkillset,txtSkillsetName'],
+            'txtDescription' => ['nullable', 'string'],
+            'txtBadgeColor' => ['nullable', 'string', 'max:30'],
+            'txtIcon' => ['nullable', 'string', 'max:100'],
+        ]);
+
+        $authUser = MUser::find(session('auth_user_id'));
+
+        MSkillset::create([
+            'txtSkillsetName' => $validated['txtSkillsetName'],
+            'txtDescription' => $validated['txtDescription'] ?? null,
+            'txtBadgeColor' => $validated['txtBadgeColor'] ?? '#006838',
+            'txtIcon' => $validated['txtIcon'] ?? 'fa-solid fa-code',
+            'txtInsertedBy' => $authUser?->txtEmployeeName ?? 'System',
+        ]);
+
+        return redirect()->route('master.index', ['tab' => 'skillsets'])->with('success', 'Skillset berhasil ditambahkan.');
+    }
+
+    public function updateSkillset(Request $request, MSkillset $skillset): RedirectResponse
+    {
+        $validated = $request->validate([
+            'txtSkillsetName' => ['required', 'string', 'max:150', 'unique:mSkillset,txtSkillsetName,' . $skillset->intSkillset_ID . ',intSkillset_ID'],
+            'txtDescription' => ['nullable', 'string'],
+            'txtBadgeColor' => ['nullable', 'string', 'max:30'],
+            'txtIcon' => ['nullable', 'string', 'max:100'],
+            'bitActive' => ['nullable'],
+        ]);
+
+        $authUser = MUser::find(session('auth_user_id'));
+
+        $skillset->update([
+            'txtSkillsetName' => $validated['txtSkillsetName'],
+            'txtDescription' => $validated['txtDescription'] ?? null,
+            'txtBadgeColor' => $validated['txtBadgeColor'] ?? $skillset->txtBadgeColor,
+            'txtIcon' => $validated['txtIcon'] ?? $skillset->txtIcon,
+            'bitActive' => $request->has('bitActive') ? $request->boolean('bitActive') : true,
+            'txtUpdatedBy' => $authUser?->txtEmployeeName ?? 'System',
+            'dtmUpdated' => now(),
+        ]);
+
+        return redirect()->route('master.index', ['tab' => 'skillsets'])->with('success', 'Skillset berhasil diperbarui.');
+    }
+
+    public function destroySkillset(MSkillset $skillset): RedirectResponse
+    {
+        if ($skillset->projects()->exists()) {
+            $skillset->update([
+                'bitActive' => false,
+                'txtUpdatedBy' => session('auth_user_name') ?: 'System',
+                'dtmUpdated' => now(),
+            ]);
+            return redirect()->route('master.index', ['tab' => 'skillsets'])->with('success', 'Skillset dinonaktifkan karena memiliki relasi project.');
+        }
+
+        $skillset->delete();
+        return redirect()->route('master.index', ['tab' => 'skillsets'])->with('success', 'Skillset berhasil dihapus.');
     }
 
     public function storeUser(Request $request): RedirectResponse

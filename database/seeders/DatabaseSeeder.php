@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\MDepartment;
 use App\Models\MProject;
 use App\Models\MProjectType;
+use App\Models\MSkillset;
 use App\Models\MSubDepartment;
 use App\Models\MUser;
 use App\Models\MWaSchedule;
@@ -84,6 +85,31 @@ class DatabaseSeeder extends Seeder
                     'floatDefaultWeight' => $pt['weight'],
                     'txtColor' => $pt['color'],
                     'txtIcon' => $pt['icon'],
+                    'txtInsertedBy' => 'seeder',
+                    'dtmInserted' => $now,
+                    'bitActive' => true,
+                ]);
+            }
+
+            // 3b. Seed Skillsets
+            $skillsets = [
+                1 => ['name' => 'Web Development', 'desc' => 'Pengembangan web app full-stack, frontend modern, RESTful API & integrasi sistem.', 'color' => '#2563EB', 'icon' => 'fa-solid fa-globe'],
+                2 => ['name' => 'AI & Computer Vision', 'desc' => 'Implementasi Machine Learning, Deep Learning, Computer Vision, OCR & AI Agents.', 'color' => '#7C3AED', 'icon' => 'fa-solid fa-brain'],
+                3 => ['name' => 'Embedded Systems & IoT Data Acquisition', 'desc' => 'Mikrokontroler, telemetri sensor, PLC, akuisisi data mesin & automasi industri IoT.', 'color' => '#0D9488', 'icon' => 'fa-solid fa-microchip'],
+                4 => ['name' => 'Mobile App Development', 'desc' => 'Pengembangan aplikasi mobile berbasis Android, iOS, maupun multiplatform Flutter.', 'color' => '#0891B2', 'icon' => 'fa-solid fa-mobile-screen-button'],
+                5 => ['name' => 'Data Engineering & Analytics', 'desc' => 'ETL pipeline data processing, data warehousing, Business Intelligence & visualisasi data.', 'color' => '#D97706', 'icon' => 'fa-solid fa-chart-line'],
+                6 => ['name' => 'Automation & RPA', 'desc' => 'Robotic Process Automation, scripting Python/bash, dan otomatisasi alur kerja operasional.', 'color' => '#EA580C', 'icon' => 'fa-solid fa-robot'],
+                7 => ['name' => 'Cloud Infrastructure & DevOps', 'desc' => 'Server management, containerization Docker, CI/CD pipeline, dan cloud infrastructure.', 'color' => '#4F46E5', 'icon' => 'fa-solid fa-cloud'],
+                8 => ['name' => 'Cybersecurity & Network Systems', 'desc' => 'Keamanan jaringan, security audit, konfigurasi firewall, VPN & server hardening.', 'color' => '#DC2626', 'icon' => 'fa-solid fa-shield-halved'],
+            ];
+
+            foreach ($skillsets as $id => $sk) {
+                MSkillset::create([
+                    'intSkillset_ID' => $id,
+                    'txtSkillsetName' => $sk['name'],
+                    'txtDescription' => $sk['desc'],
+                    'txtBadgeColor' => $sk['color'],
+                    'txtIcon' => $sk['icon'],
                     'txtInsertedBy' => 'seeder',
                     'dtmInserted' => $now,
                     'bitActive' => true,
@@ -739,6 +765,7 @@ class DatabaseSeeder extends Seeder
         MProject::query()->delete();
         TrSupervisorSubDept::query()->delete();
         MUser::query()->delete();
+        MSkillset::query()->delete();
         MProjectType::query()->delete();
         MSubDepartment::query()->delete();
         MDepartment::query()->delete();

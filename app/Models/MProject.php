@@ -27,6 +27,7 @@ class MProject extends Model
         'intDepartment_ID',
         'intSubDepartment_ID',
         'intProjectType_ID',
+        'intSkillset_ID',
         'intUser_ID',
         'txtProjectCode',
         'txtProjectName',
@@ -55,6 +56,7 @@ class MProject extends Model
         'floatPlan' => 'float',
         'floatActual' => 'float',
         'intScore' => 'integer',
+        'intSkillset_ID' => 'integer',
         'bitHasSubProject' => 'boolean',
         'bitActive' => 'boolean',
         'dtmProjectStartDate' => 'datetime',
@@ -76,6 +78,11 @@ class MProject extends Model
     public function projectType(): BelongsTo
     {
         return $this->belongsTo(MProjectType::class, 'intProjectType_ID', 'intProjectType_ID');
+    }
+
+    public function skillset(): BelongsTo
+    {
+        return $this->belongsTo(MSkillset::class, 'intSkillset_ID', 'intSkillset_ID');
     }
 
     public function user(): BelongsTo

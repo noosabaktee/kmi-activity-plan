@@ -17,6 +17,7 @@ Route::pattern('dailyPlan', '[0-9]+');
 Route::pattern('activity', '[0-9]+');
 Route::pattern('schedule', '[0-9]+');
 Route::pattern('user', '[0-9]+');
+Route::pattern('skillset', '[0-9]+');
 
 Route::middleware('kmi.guest')->group(function () {
     Route::get('/login', [AuthPageController::class, 'login'])->name('login');
@@ -65,6 +66,9 @@ Route::middleware('kmi.auth')->group(function () {
         Route::post('departments', [MasterDataController::class, 'storeDepartment'])->name('departments.store');
         Route::post('subdepartments', [MasterDataController::class, 'storeSubDepartment'])->name('subdepartments.store');
         Route::post('project-types', [MasterDataController::class, 'storeProjectType'])->name('project-types.store');
+        Route::post('skillsets', [MasterDataController::class, 'storeSkillset'])->name('skillsets.store');
+        Route::put('skillsets/{skillset}', [MasterDataController::class, 'updateSkillset'])->name('skillsets.update');
+        Route::delete('skillsets/{skillset}', [MasterDataController::class, 'destroySkillset'])->name('skillsets.destroy');
         Route::post('users', [MasterDataController::class, 'storeUser'])->name('users.store');
         Route::put('users/{user}', [MasterDataController::class, 'updateUser'])->name('users.update');
     });

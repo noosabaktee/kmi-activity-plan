@@ -1,7 +1,7 @@
 @extends('layouts.app', [
 'title' => 'Master Data - KMI Activity Plan',
 'pageTitle' => 'MASTER DATA MANAGEMENT',
-'pageSubtitle' => '<span>Departments</span> &bull; <span>Sub Departments</span> &bull; <span>Project Types</span> &bull; <span>Users</span>',
+'pageSubtitle' => '<span>Departments</span> &bull; <span>Sub Departments</span> &bull; <span>Project Types</span> &bull; <span>Skillsets</span> &bull; <span>Users</span>',
 ])
 
 @section('content')
@@ -28,6 +28,10 @@
         <a href="{{ route('master.index', ['tab' => 'project_types']) }}" class="px-4 py-2 rounded-xl text-xs font-bold transition no-underline flex items-center gap-2 {{ $tab === 'project_types' ? 'bg-[#006838] text-white shadow-xs' : 'text-gray-600 hover:bg-gray-100' }}">
             <i class="fa-solid fa-layer-group"></i>
             <span>Project Types ({{ $projectTypes->count() }})</span>
+        </a>
+        <a href="{{ route('master.index', ['tab' => 'skillsets']) }}" class="px-4 py-2 rounded-xl text-xs font-bold transition no-underline flex items-center gap-2 {{ $tab === 'skillsets' ? 'bg-[#006838] text-white shadow-xs' : 'text-gray-600 hover:bg-gray-100' }}">
+            <i class="fa-solid fa-code"></i>
+            <span>Skillsets ({{ $skillsets->count() }})</span>
         </a>
         <a href="{{ route('master.index', ['tab' => 'users']) }}" class="px-4 py-2 rounded-xl text-xs font-bold transition no-underline flex items-center gap-2 {{ $tab === 'users' ? 'bg-[#006838] text-white shadow-xs' : 'text-gray-600 hover:bg-gray-100' }}">
             <i class="fa-solid fa-users"></i>
@@ -256,6 +260,227 @@
     </div>
     @endif
 
+    <!-- Tab: Skillsets -->
+    @if ($tab === 'skillsets')
+    <div class="bg-white rounded-3xl border border-[#DDE5DD] shadow-xs overflow-hidden">
+        <div class="p-5 border-b border-gray-100 flex items-center justify-between">
+            <div>
+                <h3 class="text-sm font-extrabold text-gray-900 m-0">Daftar Skillset / Keahlian Teknis</h3>
+                <p class="text-[11px] text-gray-500 m-0 mt-0.5">Master bidang kompetensi atau keahlian untuk project utama.</p>
+            </div>
+            <button type="button" onclick="openModal('addSkillsetModal')" class="px-3.5 py-1.5 rounded-xl bg-[#006838] text-white text-xs font-bold transition flex items-center gap-1.5">
+                <i class="fa-solid fa-plus"></i> Tambah Skillset
+            </button>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-xs text-left">
+                <thead class="bg-gray-50 text-gray-600 font-bold uppercase">
+                    <tr>
+                        <th class="p-3 w-12 text-center">ID</th>
+                        <th class="p-3">Nama Skillset</th>
+                        <th class="p-3">Deskripsi</th>
+                        <th class="p-3">Badge & Icon</th>
+                        <th class="p-3 text-center">Jumlah Project</th>
+                        <th class="p-3 text-center w-28">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    @forelse ($skillsets as $sk)
+                    <tr class="hover:bg-gray-50 transition">
+                        <td class="p-3 text-center font-bold text-gray-400">{{ $sk->intSkillset_ID }}</td>
+                        <td class="p-3 font-black text-gray-900">{{ $sk->txtSkillsetName }}</td>
+                        <td class="p-3 text-gray-600 max-w-sm">{{ $sk->txtDescription ?: '-' }}</td>
+                        <td class="p-3">
+                            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-white font-bold text-[11px] shadow-2xs" style="background-color: {{ $sk->txtBadgeColor ?: '#006838' }}">
+                                <i class="{{ $sk->txtIcon ?: 'fa-solid fa-code' }}"></i>
+                                <span>{{ $sk->txtSkillsetName }}</span>
+                            </span>
+                        </td>
+                        <td class="p-3 text-center font-black text-[#006838]">{{ $sk->projects_count }}</td>
+                        <td class="p-3 text-center">
+                            <div class="flex items-center justify-center gap-1.5">
+                                <button type="button" onclick="editSkillset({{ json_encode($sk) }})" class="p-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-700 transition" title="Edit Skillset">
+                                    <i class="fa-solid fa-pen-to-square"></i>
+                                </button>
+                                <form action="{{ route('master.skillsets.destroy', $sk) }}" method="POST" onsubmit="return confirm('Yakin ingin menghapus/menonaktifkan skillset ini?')">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="p-1.5 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 transition" title="Hapus Skillset">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    @empty
+                    <tr>
+                        <td colspan="6" class="p-6 text-center text-gray-400">Belum ada data skillset.</td>
+                    </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    @php
+    $skillsetIcons = [
+    ['icon' => 'fa-solid fa-users', 'label' => 'GROUP'],
+    ['icon' => 'fa-solid fa-chalkboard-user', 'label' => 'WORKSHOP'],
+    ['icon' => 'fa-solid fa-comments', 'label' => 'DISCUSSION'],
+    ['icon' => 'fa-solid fa-book-open', 'label' => 'LEARNING'],
+    ['icon' => 'fa-solid fa-lightbulb', 'label' => 'IDEA'],
+    ['icon' => 'fa-solid fa-microphone', 'label' => 'TALK'],
+    ['icon' => 'fa-solid fa-laptop-code', 'label' => 'TECH'],
+    ['icon' => 'fa-solid fa-network-wired', 'label' => 'NETWORK'],
+    ['icon' => 'fa-solid fa-robot', 'label' => 'AUTOMATION'],
+    ['icon' => 'fa-solid fa-brain', 'label' => 'AI'],
+    ['icon' => 'fa-solid fa-gears', 'label' => 'ENGINEERING'],
+    ['icon' => 'fa-solid fa-handshake', 'label' => 'MENTORING'],
+    ['icon' => 'fa-solid fa-globe', 'label' => 'WEB DEV'],
+    ['icon' => 'fa-solid fa-microchip', 'label' => 'HARDWARE / IOT'],
+    ['icon' => 'fa-solid fa-mobile-screen-button', 'label' => 'MOBILE'],
+    ['icon' => 'fa-solid fa-cloud', 'label' => 'CLOUD'],
+    ['icon' => 'fa-solid fa-database', 'label' => 'DATABASE'],
+    ['icon' => 'fa-solid fa-chart-line', 'label' => 'ANALYTICS'],
+    ['icon' => 'fa-solid fa-shield-halved', 'label' => 'SECURITY'],
+    ['icon' => 'fa-solid fa-server', 'label' => 'SERVER'],
+    ['icon' => 'fa-solid fa-terminal', 'label' => 'TERMINAL'],
+    ['icon' => 'fa-solid fa-cube', 'label' => 'PRODUCT'],
+    ['icon' => 'fa-solid fa-wrench', 'label' => 'MAINTENANCE'],
+    ['icon' => 'fa-solid fa-bullseye', 'label' => 'TARGET'],
+    ];
+    @endphp
+
+    <!-- Add Skillset Modal -->
+    <div class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 hidden" id="addSkillsetModal">
+        <div class="bg-white rounded-3xl max-w-2xl w-full p-6 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between pb-2 border-b border-gray-100">
+                <div>
+                    <h3 class="text-base font-extrabold text-gray-900 m-0">Tambah Skillset Baru</h3>
+                    <p class="text-xs text-gray-500 m-0">Buat kategori keahlian teknis untuk penugasan project.</p>
+                </div>
+                <button type="button" onclick="closeModal('addSkillsetModal')" class="text-gray-400 p-1 hover:text-gray-600 transition"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <form action="{{ route('master.skillsets.store') }}" method="POST" class="space-y-4">
+                @csrf
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Nama Skillset <span class="text-red-500">*</span></label>
+                    <input type="text" name="txtSkillsetName" required placeholder="Contoh: Web Development / AI & Computer Vision" class="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-xs focus:border-[#006838] focus:ring-2 focus:ring-[#006838]/20 outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Deskripsi</label>
+                    <textarea name="txtDescription" rows="2" placeholder="Keterangan cakupan teknologi/keahlian..." class="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-xs focus:border-[#006838] focus:ring-2 focus:ring-[#006838]/20 outline-none"></textarea>
+                </div>
+
+                <!-- Icon Selector Grid -->
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider">
+                            Pilih Icon Skillset <span class="text-red-500">*</span>
+                        </label>
+                        <span class="text-[11px] text-gray-600 font-bold flex items-center gap-1.5 bg-gray-100 px-2.5 py-1 rounded-lg">
+                            <span>Terpilih:</span>
+                            <i id="addSkillsetIconPreview" class="fa-solid fa-robot text-[#006838] text-sm"></i>
+                        </span>
+                    </div>
+
+                    <input type="hidden" name="txtIcon" id="addSkillsetIcon" value="fa-solid fa-robot">
+
+                    <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2.5 max-h-56 overflow-y-auto p-2 custom-scrollbar border border-gray-200 rounded-2xl bg-gray-50/50">
+                        @foreach ($skillsetIcons as $item)
+                        <button type="button"
+                            onclick="selectSkillsetIcon('add', '{{ $item['icon'] }}', this)"
+                            data-icon="{{ $item['icon'] }}"
+                            class="skillset-icon-card-add flex flex-col items-center justify-center p-3 rounded-2xl border transition-all duration-150 cursor-pointer text-center group {{ $item['icon'] === 'fa-solid fa-robot' ? 'border-2 border-[#006838] bg-emerald-50/60 text-[#006838] font-black shadow-xs' : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50/80 text-gray-600' }}">
+                            <i class="{{ $item['icon'] }} text-2xl mb-1.5 transition-transform group-hover:scale-110"></i>
+                            <span class="text-[9px] uppercase font-bold tracking-wider leading-tight">{{ $item['label'] }}</span>
+                        </button>
+                        @endforeach
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Warna Badge Kategori</label>
+                    <div class="flex items-center gap-3">
+                        <input type="color" name="txtBadgeColor" value="#006838" class="w-12 h-9 rounded-xl border border-gray-300 cursor-pointer p-0.5">
+                        <span class="text-xs text-gray-500">Warna aksen latar badge untuk identifikasi di daftar project.</span>
+                    </div>
+                </div>
+
+                <div class="flex justify-end gap-2 pt-3 border-t border-gray-100">
+                    <button type="button" onclick="closeModal('addSkillsetModal')" class="px-4 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-xs font-semibold transition">Batal</button>
+                    <button type="submit" class="px-5 py-2 rounded-xl bg-[#006838] hover:bg-[#00552e] text-white text-xs font-bold shadow-xs transition">Simpan Skillset</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Skillset Modal -->
+    <div class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 hidden" id="editSkillsetModal">
+        <div class="bg-white rounded-3xl max-w-2xl w-full p-6 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between pb-2 border-b border-gray-100">
+                <div>
+                    <h3 class="text-base font-extrabold text-gray-900 m-0">Edit Skillset</h3>
+                    <p class="text-xs text-gray-500 m-0">Perbarui nama, deskripsi, icon, atau warna skillset.</p>
+                </div>
+                <button type="button" onclick="closeModal('editSkillsetModal')" class="text-gray-400 p-1 hover:text-gray-600 transition"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <form id="editSkillsetForm" method="POST" class="space-y-4">
+                @csrf
+                @method('PUT')
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Nama Skillset <span class="text-red-500">*</span></label>
+                    <input type="text" name="txtSkillsetName" id="editSkillsetName" required class="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-xs focus:border-[#006838] focus:ring-2 focus:ring-[#006838]/20 outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Deskripsi</label>
+                    <textarea name="txtDescription" id="editSkillsetDescription" rows="2" class="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-xs focus:border-[#006838] focus:ring-2 focus:ring-[#006838]/20 outline-none"></textarea>
+                </div>
+
+                <!-- Icon Selector Grid for Edit -->
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider">
+                            Pilih Icon Skillset <span class="text-red-500">*</span>
+                        </label>
+                        <span class="text-[11px] text-gray-600 font-bold flex items-center gap-1.5 bg-gray-100 px-2.5 py-1 rounded-lg">
+                            <span>Terpilih:</span>
+                            <i id="editSkillsetIconPreview" class="fa-solid fa-code text-[#006838] text-sm"></i>
+                        </span>
+                    </div>
+
+                    <input type="hidden" name="txtIcon" id="editSkillsetIcon" value="fa-solid fa-code">
+
+                    <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2.5 max-h-56 overflow-y-auto p-2 custom-scrollbar border border-gray-200 rounded-2xl bg-gray-50/50">
+                        @foreach ($skillsetIcons as $item)
+                        <button type="button"
+                            onclick="selectSkillsetIcon('edit', '{{ $item['icon'] }}', this)"
+                            data-icon="{{ $item['icon'] }}"
+                            class="skillset-icon-card-edit flex flex-col items-center justify-center p-3 rounded-2xl border transition-all duration-150 cursor-pointer text-center group border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50/80 text-gray-600">
+                            <i class="{{ $item['icon'] }} text-2xl mb-1.5 transition-transform group-hover:scale-110"></i>
+                            <span class="text-[9px] uppercase font-bold tracking-wider leading-tight">{{ $item['label'] }}</span>
+                        </button>
+                        @endforeach
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Warna Badge Kategori</label>
+                    <div class="flex items-center gap-3">
+                        <input type="color" name="txtBadgeColor" id="editSkillsetBadgeColor" class="w-12 h-9 rounded-xl border border-gray-300 cursor-pointer p-0.5">
+                        <span class="text-xs text-gray-500">Warna aksen latar badge untuk identifikasi di daftar project.</span>
+                    </div>
+                </div>
+
+                <div class="flex justify-end gap-2 pt-3 border-t border-gray-100">
+                    <button type="button" onclick="closeModal('editSkillsetModal')" class="px-4 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-xs font-semibold transition">Batal</button>
+                    <button type="submit" class="px-5 py-2 rounded-xl bg-[#006838] hover:bg-[#00552e] text-white text-xs font-bold shadow-xs transition">Simpan Perubahan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    @endif
+
     <!-- Tab 4: Users / Employees -->
     @if ($tab === 'users')
     <div class="bg-white rounded-3xl border border-[#DDE5DD] shadow-xs overflow-hidden">
@@ -421,6 +646,41 @@
         } else {
             sec.classList.add('hidden');
         }
+    }
+
+    function selectSkillsetIcon(prefix, iconClass, el) {
+        const input = document.getElementById(prefix + 'SkillsetIcon');
+        const preview = document.getElementById(prefix + 'SkillsetIconPreview');
+        if (input) input.value = iconClass;
+        if (preview) preview.className = iconClass + ' text-[#006838] text-sm';
+
+        const cards = document.querySelectorAll('.skillset-icon-card-' + prefix);
+        cards.forEach(card => {
+            card.className = 'skillset-icon-card-' + prefix + ' flex flex-col items-center justify-center p-3 rounded-2xl border border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50/80 text-gray-600 transition-all duration-150 cursor-pointer text-center group';
+        });
+
+        if (el) {
+            el.className = 'skillset-icon-card-' + prefix + ' flex flex-col items-center justify-center p-3 rounded-2xl border-2 border-[#006838] bg-emerald-50/60 text-[#006838] font-black shadow-xs transition-all duration-150 cursor-pointer text-center group';
+        }
+    }
+
+    function editSkillset(sk) {
+        document.getElementById('editSkillsetName').value = sk.txtSkillsetName;
+        document.getElementById('editSkillsetDescription').value = sk.txtDescription || '';
+        document.getElementById('editSkillsetBadgeColor').value = sk.txtBadgeColor || '#006838';
+        document.getElementById('editSkillsetForm').action = '/master-data/skillsets/' + sk.intSkillset_ID;
+
+        const iconVal = sk.txtIcon || 'fa-solid fa-code';
+        let matchedCard = null;
+        const cards = document.querySelectorAll('.skillset-icon-card-edit');
+        cards.forEach(card => {
+            if (card.getAttribute('data-icon') === iconVal) {
+                matchedCard = card;
+            }
+        });
+
+        selectSkillsetIcon('edit', iconVal, matchedCard);
+        openModal('editSkillsetModal');
     }
 </script>
 @endsection

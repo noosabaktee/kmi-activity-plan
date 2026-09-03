@@ -90,6 +90,22 @@
                     </select>
                 </div>
 
+                <div class="md:col-span-2">
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                        <i class="fa-solid fa-code text-[#006838]"></i>
+                        <span>Skillset Utama Project</span>
+                    </label>
+                    <select name="intSkillset_ID" class="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-sm focus:border-[#006838] outline-none">
+                        <option value="">-- Pilih Skillset dari Master Data --</option>
+                        @foreach ($skillsets as $sk)
+                        <option value="{{ $sk->intSkillset_ID }}" {{ old('intSkillset_ID') == $sk->intSkillset_ID ? 'selected' : '' }}>
+                            {{ $sk->txtSkillsetName }}
+                        </option>
+                        @endforeach
+                    </select>
+                    <p class="text-[11px] text-gray-500 mt-1 m-0">Bidang keahlian teknis project utama (contoh: Web Development, AI & Computer Vision, Embedded Systems & IoT Data Acquisition, dll).</p>
+                </div>
+
                 <input type="hidden" name="intUser_ID" id="mainIntUserId" value="{{ old('intUser_ID', $authUser->intUser_ID) }}">
 
                 <div class="md:col-span-2" id="singleAssignmentContainerWrapper">

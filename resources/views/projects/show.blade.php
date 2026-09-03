@@ -18,14 +18,23 @@
                 @endif
             </div>
             <div>
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-2 flex-wrap">
                     <h2 class="text-xl font-black text-gray-900 tracking-tight m-0">{{ $project->txtProjectName }}</h2>
                     <span class="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold text-white" style="background-color: {{ $project->projectType?->txtColor ?? '#006838' }}">
                         {{ $project->projectType?->txtProjectTypeCode ?? 'IPP' }}
                     </span>
+                    @if ($project->skillset)
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-extrabold text-white shadow-2xs" style="background-color: {{ $project->skillset->txtBadgeColor ?: '#006838' }}">
+                        <i class="{{ $project->skillset->txtIcon ?: 'fa-solid fa-code' }} text-[10px]"></i>
+                        <span>{{ $project->skillset->txtSkillsetName }}</span>
+                    </span>
+                    @endif
                 </div>
                 <div class="text-xs text-gray-500 m-0 mt-1 flex items-center gap-2 flex-wrap">
                     <span>{{ $project->txtProjectCode }}</span> &bull;
+                    @if ($project->skillset)
+                    <span class="font-semibold text-emerald-800"><i class="fa-solid fa-code mr-1"></i>{{ $project->skillset->txtSkillsetName }}</span> &bull;
+                    @endif
                     <span>{{ $project->subDepartment?->txtSubDepartmentName ?? 'MDP' }}</span> &bull;
                     <span class="font-bold text-gray-700">Pelaksana:</span>
                     @php $allUsers = $project->allAssignedUsers(); @endphp
