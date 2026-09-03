@@ -276,9 +276,9 @@
 <!-- Modal Tambah / Edit Sub Project -->
 @push('modals')
 <div class="modal-overlay" id="subProjectModal" data-modal-overlay style="z-index: 2500;">
-    <div class="modal-container w-full max-h-[92vh] flex flex-col p-0 overflow-hidden rounded-3xl" style="max-width: 1100px !important; width: 95vw !important;" role="dialog" aria-modal="true" aria-labelledby="subModalTitle">
+    <div class="modal-container modal-container-2xl !max-w-5xl w-full max-h-[92vh] flex flex-col p-0 overflow-hidden rounded-3xl" role="dialog" aria-modal="true" aria-labelledby="subModalTitle">
         <!-- Modal Header -->
-        <div class="modal-header px-7 py-4.5 bg-purple-50/80 border-b border-purple-100 flex items-center justify-between">
+        <div class="modal-header px-6 py-4 bg-purple-50/80 border-b border-purple-100 flex items-center justify-between">
             <div class="modal-title-copy flex items-center gap-3">
                 <div class="w-10 h-10 rounded-xl bg-purple-600 text-white flex items-center justify-center text-lg shadow-xs">
                     <i class="fa-solid fa-layer-group"></i>
@@ -294,7 +294,7 @@
         </div>
 
         <!-- Modal Body (Scrollable) -->
-        <div class="modal-body px-7 py-6 overflow-y-auto space-y-6 flex-1">
+        <div class="modal-body px-6 py-5 overflow-y-auto space-y-6 flex-1">
             <!-- 1. Detail Utama Sub Project -->
             <div class="space-y-3">
                 <h4 class="text-xs font-black text-purple-950 uppercase tracking-wider m-0 flex items-center gap-2">
@@ -302,30 +302,30 @@
                     <span>A. Informasi Utama Sub Project</span>
                 </h4>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 bg-gray-50/70 p-4.5 rounded-2xl border border-gray-200">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 bg-gray-50/70 p-4 rounded-2xl border border-gray-200">
                     <div class="sm:col-span-2 lg:col-span-3">
                         <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Nama Sub Project <span class="text-red-500">*</span></label>
-                        <input type="text" id="subModalName" class="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-sm focus:border-purple-600 focus:ring-2 focus:ring-purple-600/20 outline-none bg-white" placeholder="Contoh: Vibe Coding / KIMI Agent / RPA Automation">
+                        <input type="text" id="subModalName" class="w-full px-3.5 py-2 rounded-xl border border-gray-300 text-sm focus:border-purple-600 focus:ring-2 focus:ring-purple-600/20 outline-none bg-white" placeholder="Contoh: Vibe Coding / KIMI Agent / RPA Automation">
                     </div>
 
                     <div>
                         <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Bobot Sub (%) <span class="text-red-500">*</span></label>
-                        <input type="number" step="0.1" min="0" max="100" id="subModalWeight" class="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-sm focus:border-purple-600 focus:ring-2 focus:ring-purple-600/20 outline-none bg-white text-center font-bold text-purple-900" placeholder="Contoh: 35">
+                        <input type="number" step="0.1" min="0" max="100" id="subModalWeight" class="w-full px-3.5 py-2 rounded-xl border border-gray-300 text-sm focus:border-purple-600 focus:ring-2 focus:ring-purple-600/20 outline-none bg-white" placeholder="Contoh: 35">
                     </div>
 
                     <div>
                         <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Tanggal Mulai (Start)</label>
-                        <input type="date" id="subModalStartDate" class="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-sm focus:border-purple-600 outline-none bg-white">
+                        <input type="date" id="subModalStartDate" class="w-full px-3.5 py-2 rounded-xl border border-gray-300 text-sm focus:border-purple-600 outline-none bg-white">
                     </div>
 
                     <div>
                         <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Tanggal Selesai (Target)</label>
-                        <input type="date" id="subModalEndDate" class="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-sm focus:border-purple-600 outline-none bg-white">
+                        <input type="date" id="subModalEndDate" class="w-full px-3.5 py-2 rounded-xl border border-gray-300 text-sm focus:border-purple-600 outline-none bg-white">
                     </div>
 
                     <div class="sm:col-span-2">
                         <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Deliverable / Output</label>
-                        <input type="text" id="subModalDeliverable" class="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-sm focus:border-purple-600 outline-none bg-white" placeholder="Contoh: Modul otomatisasi & dokumentasi API">
+                        <input type="text" id="subModalDeliverable" class="w-full px-3.5 py-2 rounded-xl border border-gray-300 text-sm focus:border-purple-600 outline-none bg-white" placeholder="Contoh: Modul otomatisasi & dokumentasi API">
                     </div>
                 </div>
             </div>
@@ -338,9 +338,9 @@
                             <i class="fa-solid fa-chart-gantt text-emerald-600"></i>
                             <span>B. Tahapan Exposure S-Curve (Direct Stages)</span>
                         </h4>
-                        <p class="text-xs text-gray-500 m-0 mt-0.5">Tentukan tahapan kerja (stages) untuk sub project ini. Akumulasi Plan disarankan 100%.</p>
+                        <p class="text-[11px] text-gray-500 m-0 mt-0.5">Tentukan tahapan kerja (stages) untuk sub project ini. Akumulasi Plan disarankan 100%.</p>
                     </div>
-                    <button type="button" onclick="addSubStageRow()" class="px-3.5 py-2 rounded-xl bg-emerald-50 text-[#006838] hover:bg-emerald-100 font-bold text-xs transition flex items-center gap-1.5 cursor-pointer border border-emerald-200">
+                    <button type="button" onclick="addSubStageRow()" class="px-3 py-1.5 rounded-xl bg-emerald-50 text-[#006838] hover:bg-emerald-100 font-bold text-xs transition flex items-center gap-1.5 cursor-pointer border border-emerald-200">
                         <i class="fa-solid fa-plus"></i>
                         <span>Tambah Tahapan</span>
                     </button>
@@ -351,12 +351,12 @@
                         <table class="w-full text-xs text-left">
                             <thead class="bg-gray-50 border-b border-gray-200 text-gray-600 font-bold uppercase text-[10px]">
                                 <tr>
-                                    <th class="py-3 px-4">Nama Tahapan (Step)</th>
-                                    <th class="py-3 px-4 w-44">Start Date</th>
-                                    <th class="py-3 px-4 w-44">End Date</th>
-                                    <th class="py-3 px-4 text-center w-28">Plan (%)</th>
-                                    <th class="py-3 px-4 text-center w-28">Actual (%)</th>
-                                    <th class="py-3 px-4 text-center w-14">Aksi</th>
+                                    <th class="py-2.5 px-3">Nama Tahapan (Step)</th>
+                                    <th class="py-2.5 px-3">Start Date</th>
+                                    <th class="py-2.5 px-3">End Date</th>
+                                    <th class="py-2.5 px-3 text-center w-20">Plan (%)</th>
+                                    <th class="py-2.5 px-3 text-center w-20">Actual (%)</th>
+                                    <th class="py-2.5 px-3 text-center w-10">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-100" id="subModalStagesBody">
@@ -364,9 +364,9 @@
                             </tbody>
                             <tfoot class="bg-gray-50 font-bold text-gray-700 border-t border-gray-200">
                                 <tr>
-                                    <td colspan="3" class="py-2.5 px-4 text-right text-xs">Total Alokasi Tahapan:</td>
-                                    <td class="py-2.5 px-4 text-center text-sm font-extrabold" id="subModalTotalPlan">0%</td>
-                                    <td class="py-2.5 px-4 text-center text-sm font-extrabold" id="subModalTotalActual">0%</td>
+                                    <td colspan="3" class="py-2 px-3 text-right text-[11px]">Total Alokasi Tahapan:</td>
+                                    <td class="py-2 px-3 text-center" id="subModalTotalPlan">0%</td>
+                                    <td class="py-2 px-3 text-center" id="subModalTotalActual">0%</td>
                                     <td></td>
                                 </tr>
                             </tfoot>
@@ -377,11 +377,11 @@
         </div>
 
         <!-- Modal Footer -->
-        <div class="modal-footer px-7 py-4 bg-gray-50 border-t border-gray-200 flex items-center justify-between">
-            <button type="button" onclick="closeModal('subProjectModal')" class="px-5 py-2.5 rounded-xl bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold text-xs transition cursor-pointer">
+        <div class="modal-footer px-6 py-3.5 bg-gray-50 border-t border-gray-200 flex items-center justify-between">
+            <button type="button" onclick="closeModal('subProjectModal')" class="px-4 py-2 rounded-xl bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold text-xs transition cursor-pointer">
                 Batal
             </button>
-            <button type="button" onclick="saveSubProjectFromModal()" class="px-6 py-2.5 rounded-xl bg-[#006838] hover:bg-[#004d29] text-white font-bold text-xs shadow-sm transition flex items-center gap-2 cursor-pointer">
+            <button type="button" onclick="saveSubProjectFromModal()" class="px-5 py-2 rounded-xl bg-[#006838] hover:bg-[#004d29] text-white font-bold text-xs shadow-sm transition flex items-center gap-2 cursor-pointer">
                 <i class="fa-solid fa-check"></i>
                 <span id="subModalSubmitText">Simpan Sub Project</span>
             </button>
@@ -560,23 +560,23 @@ return [
         const tr = document.createElement('tr');
         tr.className = 'sub-modal-stage-row hover:bg-gray-50/70 transition';
         tr.innerHTML = `
-            <td class="py-2.5 px-3">
-                <input type="text" class="sub-stage-step w-full px-3 py-2 rounded-lg border border-gray-300 text-xs focus:border-purple-600 outline-none" value="${escapeHtml(data.step || '')}" placeholder="Nama Tahapan">
+            <td class="p-2">
+                <input type="text" class="sub-stage-step w-full px-2.5 py-1.5 rounded-lg border border-gray-300 text-xs focus:border-purple-600 outline-none" value="${escapeHtml(data.step || '')}" placeholder="Nama Tahapan">
             </td>
-            <td class="py-2.5 px-3">
-                <input type="date" class="sub-stage-start w-full px-3 py-2 rounded-lg border border-gray-300 text-xs focus:border-purple-600 outline-none" value="${data.start || ''}">
+            <td class="p-2">
+                <input type="date" class="sub-stage-start w-full px-2 py-1.5 rounded-lg border border-gray-300 text-xs focus:border-purple-600 outline-none" value="${data.start || ''}">
             </td>
-            <td class="py-2.5 px-3">
-                <input type="date" class="sub-stage-end w-full px-3 py-2 rounded-lg border border-gray-300 text-xs focus:border-purple-600 outline-none" value="${data.end || ''}">
+            <td class="p-2">
+                <input type="date" class="sub-stage-end w-full px-2 py-1.5 rounded-lg border border-gray-300 text-xs focus:border-purple-600 outline-none" value="${data.end || ''}">
             </td>
-            <td class="py-2.5 px-3 text-center">
-                <input type="number" step="1" min="0" class="sub-stage-plan w-full px-3 py-2 rounded-lg border border-gray-300 text-xs text-center font-bold text-indigo-700 focus:border-purple-600 outline-none" value="${data.plan !== undefined ? data.plan : 25}" oninput="calcSubModalStageTotals()">
+            <td class="p-2">
+                <input type="number" step="1" min="0" class="sub-stage-plan w-full px-2 py-1.5 rounded-lg border border-gray-300 text-xs text-center font-bold text-indigo-700 focus:border-purple-600 outline-none" value="${data.plan !== undefined ? data.plan : 25}" oninput="calcSubModalStageTotals()">
             </td>
-            <td class="py-2.5 px-3 text-center">
-                <input type="number" step="1" min="0" class="sub-stage-actual w-full px-3 py-2 rounded-lg border border-gray-300 text-xs text-center font-bold text-[#006838] focus:border-purple-600 outline-none" value="${data.actual !== undefined ? data.actual : 0}" oninput="calcSubModalStageTotals()">
+            <td class="p-2">
+                <input type="number" step="1" min="0" class="sub-stage-actual w-full px-2 py-1.5 rounded-lg border border-gray-300 text-xs text-center font-bold text-[#006838] focus:border-purple-600 outline-none" value="${data.actual !== undefined ? data.actual : 0}" oninput="calcSubModalStageTotals()">
             </td>
-            <td class="py-2.5 px-3 text-center">
-                <button type="button" onclick="this.closest('tr').remove(); calcSubModalStageTotals();" class="text-red-400 hover:text-red-600 p-1.5 cursor-pointer" title="Hapus Tahapan">
+            <td class="p-2 text-center">
+                <button type="button" onclick="this.closest('tr').remove(); calcSubModalStageTotals();" class="text-red-400 hover:text-red-600 p-1 cursor-pointer" title="Hapus Tahapan">
                     <i class="fa-solid fa-trash"></i>
                 </button>
             </td>
