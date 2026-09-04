@@ -20,14 +20,19 @@ class DailyPlanController extends Controller
 
         $query = MWeeklyPlan::with(['user', 'activities'])->orderBy('dtmWeekStartDate', 'desc');
 
-        if ($authUser && $authUser->isEmployee()) {
+        if ($authUser && ! $authUser->isSuperadmin()) {
             $query->where('intUser_ID', $authUser->intUser_ID);
         } elseif ($request->filled('employee')) {
             $query->where('intUser_ID', $request->employee);
         }
 
         $weeklyPlans = $query->get();
-        $employees = MUser::active()->where('txtRole', 'Employee')->orderBy('txtEmployeeName')->get();
+
+        if ($authUser && ! $authUser->isSuperadmin()) {
+            $employees = MUser::active()->where('intUser_ID', $authUser->intUser_ID)->get();
+        } else {
+            $employees = MUser::active()->where('txtRole', '!=', 'Superadmin')->orderBy('txtEmployeeName')->get();
+        }
 
         return view('reports.daily-plans', [
             'weeklyPlans' => $weeklyPlans,
@@ -50,7 +55,7 @@ class DailyPlanController extends Controller
         ]);
 
         $userId = ! empty($validated['intUser_ID']) ? (int) $validated['intUser_ID'] : $authUserId;
-        if ($authUser && $authUser->isEmployee()) {
+        if ($authUser && ! $authUser->isSuperadmin()) {
             $userId = $authUser->intUser_ID;
         }
 
@@ -69,6 +74,11 @@ class DailyPlanController extends Controller
 
     public function show(MWeeklyPlan $dailyPlan): View
     {
+        $authUser = MUser::find(session('auth_user_id'));
+        if ($authUser && ! $authUser->isSuperadmin() && $dailyPlan->intUser_ID !== $authUser->intUser_ID) {
+            abort(403, 'Unauthorized access to this weekly plan.');
+        }
+
         $dailyPlan->load(['user.subDepartment', 'activities.project']);
 
         // Group activities by Monday - Friday
@@ -102,7 +112,6 @@ class DailyPlanController extends Controller
             ->when($targetUserId, fn($q) => $q->forUser($targetUserId))
             ->orderBy('txtProjectName')
             ->get();
-        $authUser = MUser::find(session('auth_user_id'));
 
         return view('reports.daily-plan-detail', [
             'dailyPlan' => $dailyPlan,
@@ -115,6 +124,11 @@ class DailyPlanController extends Controller
 
     public function destroy(MWeeklyPlan $dailyPlan): RedirectResponse
     {
+        $authUser = MUser::find(session('auth_user_id'));
+        if ($authUser && ! $authUser->isSuperadmin() && $dailyPlan->intUser_ID !== $authUser->intUser_ID) {
+            abort(403, 'Unauthorized action.');
+        }
+
         $dailyPlan->activities()->delete();
         $dailyPlan->delete();
 
@@ -123,6 +137,11 @@ class DailyPlanController extends Controller
 
     public function storeActivity(Request $request, MWeeklyPlan $dailyPlan): RedirectResponse
     {
+        $authUser = MUser::find(session('auth_user_id'));
+        if ($authUser && ! $authUser->isSuperadmin() && $dailyPlan->intUser_ID !== $authUser->intUser_ID) {
+            abort(403, 'Unauthorized action.');
+        }
+
         $validated = $request->validate([
             'txtDayName' => ['required', 'string', 'in:Senin,Selasa,Rabu,Kamis,Jumat'],
             'dtmActivityDate' => ['nullable', 'date'],
@@ -134,8 +153,6 @@ class DailyPlanController extends Controller
             'intProject_ID' => ['nullable', 'integer'],
             'txtRemarks' => ['nullable', 'string', 'max:500'],
         ]);
-
-        $authUser = MUser::find(session('auth_user_id'));
 
         TrDailyPlanActivity::create([
             'intWeeklyPlan_ID' => $dailyPlan->intWeeklyPlan_ID,
@@ -156,6 +173,11 @@ class DailyPlanController extends Controller
 
     public function destroyActivity(TrDailyPlanActivity $activity): RedirectResponse
     {
+        $authUser = MUser::find(session('auth_user_id'));
+        if ($authUser && ! $authUser->isSuperadmin() && $activity->intUser_ID !== $authUser->intUser_ID) {
+            abort(403, 'Unauthorized action.');
+        }
+
         $planId = $activity->intWeeklyPlan_ID;
         $dayName = $activity->txtDayName;
         $activity->delete();

@@ -34,7 +34,7 @@
                     <span class="absolute left-3.5 top-1/2 -translate-y-1/2 flex items-center justify-center text-gray-400 text-sm pointer-events-none z-10 w-5">
                         <i class="fa-regular fa-envelope"></i>
                     </span>
-                    <input type="email" id="loginModalEmail" name="txtEmail" value="{{ old('txtEmail', 'head.mdp@kalbe.co.id') }}" required
+                    <input type="email" id="loginModalEmail" name="txtEmail" value="{{ old('txtEmail', 'nrs@kalbe.co.id') }}" required
                         style="padding-left: 2.75rem !important;"
                         class="w-full pr-3.5 py-2.5 rounded-xl border border-gray-300 text-xs focus:border-[#006838] focus:ring-2 focus:ring-[#006838]/20 outline-none transition"
                         placeholder="name@kalbe.co.id">
@@ -72,17 +72,17 @@
         <div class="mt-5 pt-4 border-t border-gray-100">
             <p class="text-[10px] text-gray-400 uppercase font-bold tracking-wider mb-2">Akun Demo Cepat (Password: 123456):</p>
             <div class="grid grid-cols-2 gap-1.5 text-xs">
-                <button type="button" onclick="setQuickLogin('head.mdp@kalbe.co.id', '123456')" class="p-2 rounded-xl bg-gray-50 hover:bg-emerald-50 hover:border-emerald-200 border border-gray-200 text-left transition cursor-pointer">
-                    <span class="block font-bold text-[#006838] text-[11px]">Head MDP</span>
-                    <span class="text-[9px] text-gray-400 truncate block">head.mdp@kalbe.co.id</span>
-                </button>
-                <button type="button" onclick="setQuickLogin('spv.it@kalbe.co.id', '123456')" class="p-2 rounded-xl bg-gray-50 hover:bg-emerald-50 hover:border-emerald-200 border border-gray-200 text-left transition cursor-pointer">
-                    <span class="block font-bold text-[#006838] text-[11px]">Supervisor IT</span>
-                    <span class="text-[9px] text-gray-400 truncate block">spv.it@kalbe.co.id</span>
-                </button>
                 <button type="button" onclick="setQuickLogin('nrs@kalbe.co.id', '123456')" class="p-2 rounded-xl bg-gray-50 hover:bg-emerald-50 hover:border-emerald-200 border border-gray-200 text-left transition cursor-pointer">
-                    <span class="block font-bold text-[#006838] text-[11px]">Employee (NRS)</span>
-                    <span class="text-[9px] text-gray-400 truncate block">nrs@kalbe.co.id</span>
+                    <span class="block font-bold text-[#006838] text-[11px]">Dept Head MDP</span>
+                    <span class="text-[9px] text-gray-400 truncate block">nrs@kalbe.co.id (NRS)</span>
+                </button>
+                <button type="button" onclick="setQuickLogin('ami@kalbe.co.id', '123456')" class="p-2 rounded-xl bg-gray-50 hover:bg-emerald-50 hover:border-emerald-200 border border-gray-200 text-left transition cursor-pointer">
+                    <span class="block font-bold text-[#006838] text-[11px]">SPV MD/IT & AM</span>
+                    <span class="text-[9px] text-gray-400 truncate block">ami@kalbe.co.id (AMI)</span>
+                </button>
+                <button type="button" onclick="setQuickLogin('aho@kalbe.co.id', '123456')" class="p-2 rounded-xl bg-gray-50 hover:bg-emerald-50 hover:border-emerald-200 border border-gray-200 text-left transition cursor-pointer">
+                    <span class="block font-bold text-[#006838] text-[11px]">Employee (AHO)</span>
+                    <span class="text-[9px] text-gray-400 truncate block">aho@kalbe.co.id (AHO)</span>
                 </button>
                 <button type="button" onclick="setQuickLogin('superadmin@kalbe.co.id', '123456')" class="p-2 rounded-xl bg-gray-50 hover:bg-emerald-50 hover:border-emerald-200 border border-gray-200 text-left transition cursor-pointer">
                     <span class="block font-bold text-[#006838] text-[11px]">Superadmin</span>

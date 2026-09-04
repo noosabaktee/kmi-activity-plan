@@ -29,12 +29,12 @@ test('it renders the login page with system branding and summary stats', functio
 
 test('it allows Head, Supervisor, and Employee to login with credentials', function () {
     $response = $this->post(route('login.authenticate'), [
-        'txtEmail' => 'head.mdp@kalbe.co.id',
+        'txtEmail' => 'nrs@kalbe.co.id',
         'txtPassword' => '123456',
     ]);
 
     $response->assertRedirect(route('dashboard.index'));
-    $this->assertEquals(session('auth_user_id'), MUser::where('txtEmail', 'head.mdp@kalbe.co.id')->value('intUser_ID'));
+    $this->assertEquals(session('auth_user_id'), MUser::where('txtEmail', 'nrs@kalbe.co.id')->value('intUser_ID'));
 });
 
 test('it displays dashboard with KPI metrics, sub-department cards and S-Curve preview', function () {
@@ -798,4 +798,99 @@ test('it redirects to dashboard.index upon logout', function () {
 
     $response->assertRedirect(route('dashboard.index'));
     expect(session('auth_user_id'))->toBeNull();
+});
+
+test('it verifies organizational roles in seeder: NRS as Head, AMI and SNH as Supervisors', function () {
+    $nrs = MUser::where('txtEmployeeCode', 'NRS')->first();
+    expect($nrs)->not->toBeNull();
+    expect($nrs->txtRole)->toBe('Head');
+    expect($nrs->txtPosition)->toBe('Department Head MDP');
+
+    $ami = MUser::with('supervisedSubDepartments')->where('txtEmployeeCode', 'AMI')->first();
+    expect($ami)->not->toBeNull();
+    expect($ami->txtRole)->toBe('Supervisor');
+    expect($ami->txtPosition)->toBe('Supervisor MD/IT & AM');
+    expect($ami->supervisedSubDepartments->pluck('txtSubDepartmentCode')->all())->toContain('MD/IT', 'AM');
+
+    $snh = MUser::with('supervisedSubDepartments')->where('txtEmployeeCode', 'SNH')->first();
+    expect($snh)->not->toBeNull();
+    expect($snh->txtRole)->toBe('Supervisor');
+    expect($snh->txtPosition)->toBe('Supervisor MO/PPIC & MP/Project');
+    expect($snh->supervisedSubDepartments->pluck('txtSubDepartmentCode')->all())->toContain('MO/PPIC', 'MP/Project');
+});
+
+test('it restricts Daily Task view so Head and Supervisor only see their own tasks while Superadmin sees all', function () {
+    $nrs = MUser::where('txtEmployeeCode', 'NRS')->first();
+    $ami = MUser::where('txtEmployeeCode', 'AMI')->first();
+    $superadmin = MUser::where('txtRole', 'Superadmin')->first();
+
+    // 1. NRS (Head) only sees NRS tasks
+    $responseNrs = $this->withSession(['auth_user_id' => $nrs->intUser_ID])
+        ->get(route('reports.daily-tasks'));
+    $responseNrs->assertStatus(200);
+    $responseNrs->assertViewHas('tasks', function ($tasks) use ($nrs, $ami) {
+        return $tasks->every(fn($t) => $t->intUser_ID === $nrs->intUser_ID)
+            && ! $tasks->contains('intUser_ID', $ami->intUser_ID);
+    });
+
+    // 2. AMI (Supervisor) only sees AMI tasks
+    $responseAmi = $this->withSession(['auth_user_id' => $ami->intUser_ID])
+        ->get(route('reports.daily-tasks'));
+    $responseAmi->assertStatus(200);
+    $responseAmi->assertViewHas('tasks', function ($tasks) use ($ami, $nrs) {
+        return $tasks->every(fn($t) => $t->intUser_ID === $ami->intUser_ID)
+            && ! $tasks->contains('intUser_ID', $nrs->intUser_ID);
+    });
+
+    // 3. Superadmin sees all tasks
+    $responseAdmin = $this->withSession(['auth_user_id' => $superadmin->intUser_ID])
+        ->get(route('reports.daily-tasks'));
+    $responseAdmin->assertStatus(200);
+    $responseAdmin->assertViewHas('tasks', function ($tasks) use ($nrs, $ami) {
+        return $tasks->contains('intUser_ID', $nrs->intUser_ID)
+            && $tasks->contains('intUser_ID', $ami->intUser_ID);
+    });
+});
+
+test('it restricts Daily Plan view and actions so non-superadmin users only see and manage their own cards', function () {
+    $nrs = MUser::where('txtEmployeeCode', 'NRS')->first();
+    $snh = MUser::where('txtEmployeeCode', 'SNH')->first();
+    $superadmin = MUser::where('txtRole', 'Superadmin')->first();
+
+    // 1. NRS (Head) only sees NRS weekly plans
+    $responseNrs = $this->withSession(['auth_user_id' => $nrs->intUser_ID])
+        ->get(route('reports.daily-plans'));
+    $responseNrs->assertStatus(200);
+    $responseNrs->assertViewHas('weeklyPlans', function ($plans) use ($nrs, $snh) {
+        return $plans->every(fn($p) => $p->intUser_ID === $nrs->intUser_ID)
+            && ! $plans->contains('intUser_ID', $snh->intUser_ID);
+    });
+
+    // 2. SNH (Supervisor) only sees SNH weekly plans
+    $responseSnh = $this->withSession(['auth_user_id' => $snh->intUser_ID])
+        ->get(route('reports.daily-plans'));
+    $responseSnh->assertStatus(200);
+    $responseSnh->assertViewHas('weeklyPlans', function ($plans) use ($snh, $nrs) {
+        return $plans->every(fn($p) => $p->intUser_ID === $snh->intUser_ID)
+            && ! $plans->contains('intUser_ID', $nrs->intUser_ID);
+    });
+
+    // 3. Superadmin sees both NRS and SNH weekly plans
+    $responseAdmin = $this->withSession(['auth_user_id' => $superadmin->intUser_ID])
+        ->get(route('reports.daily-plans'));
+    $responseAdmin->assertStatus(200);
+    $responseAdmin->assertViewHas('weeklyPlans', function ($plans) use ($nrs, $snh) {
+        return $plans->contains('intUser_ID', $nrs->intUser_ID)
+            && $plans->contains('intUser_ID', $snh->intUser_ID);
+    });
+
+    // 4. SNH cannot view or mutate NRS weekly plan
+    $nrsPlan = MWeeklyPlan::where('intUser_ID', $nrs->intUser_ID)->first();
+    $forbiddenShow = $this->withSession(['auth_user_id' => $snh->intUser_ID])
+        ->get(route('daily-plans.show', $nrsPlan));
+    $forbiddenShow->assertStatus(403);
+
+    $forbiddenDelete = $this->withSession(['auth_user_id' => $snh->intUser_ID])
+        ->delete(route('daily-plans.destroy', $nrsPlan));
+    $forbiddenDelete->assertStatus(403);
 });

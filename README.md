@@ -52,7 +52,7 @@ Aplikasi monitoring KPI tahunan, tracking proyek bertingkat (Project, Sub-Projec
 | **Dashboard** | ✅ (Milik Sendiri) | ✅ (Sub-Dept Terkait) | ✅ (Semua Sub-Dept) | ✅ | ✅ |
 | **Project CRUD** | ✅ (Project Sendiri) | ✅ (Sub-Dept Terkait) | ✅ (Semua) | ✅ | ✅ |
 | **Exposure S-Curve** | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **Daily Tasks & Plans** | ✅ (Aktivitas Sendiri) | ✅ (Review Sub-Dept) | ✅ (Review Semua) | ✅ | ✅ |
+| **Daily Tasks & Plans** | ✅ (Aktivitas Sendiri) | ✅ (Aktivitas Sendiri) | ✅ (Aktivitas Sendiri) | ✅ (Semua) | ✅ (Semua) |
 | **Master Data** | ❌ | ❌ | ✅ | ✅ | ✅ |
 | **WA Scheduler** | ❌ | ❌ | ❌ | ❌ | ✅ |
 
@@ -134,10 +134,11 @@ Aplikasi monitoring KPI tahunan, tracking proyek bertingkat (Project, Sub-Projec
 
 | Role | Username / NIK | Password Default |
 |---|---|---|
-| **Superadmin** | `superadmin@kalbe.co.id` / `EMP000` | `123456` |
-| **Head (MDP Head)** | `head.mdp@kalbe.co.id` / `EMP001` | `123456` |
-| **Supervisor** | `spv.it@kalbe.co.id` / `EMP002` | `123456` |
-| **Employee** | `staff.it@kalbe.co.id` / `EMP004` | `123456` |
+| **Superadmin** | `superadmin@kalbe.co.id` / `ADM-001` | `123456` |
+| **Dept Head MDP** | `nrs@kalbe.co.id` / `NRS` (Nareswara) | `123456` |
+| **Supervisor MD/IT & AM** | `ami@kalbe.co.id` / `AMI` (Amira) | `123456` |
+| **Supervisor MO/PPIC & MP** | `snh@kalbe.co.id` / `SNH` (Sania) | `123456` |
+| **Employee** | `aho@kalbe.co.id` / `AHO` (Anthony) dll. | `123456` |
 
 ---
 

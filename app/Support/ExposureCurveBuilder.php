@@ -44,7 +44,7 @@ class ExposureCurveBuilder
             ];
         })->values()->all();
 
-        $employees = MUser::with(['subDepartment'])->where('bitActive', true)->where('txtRole', 'Employee')->get();
+        $employees = MUser::with(['subDepartment'])->where('bitActive', true)->where('txtRole', '!=', RoleAccess::ROLE_SUPERADMIN)->get();
         $employeesData = $employees->map(function (MUser $emp) {
             return [
                 'id' => (string) $emp->intUser_ID,

@@ -134,16 +134,16 @@ class DatabaseSeeder extends Seeder
                 'bitActive' => true,
             ]);
 
-            // Department Head
+            // Department Head MDP (NRS)
             $head = MUser::create([
-                'intUser_ID' => 2,
+                'intUser_ID' => 5,
                 'intDepartment_ID' => $deptMdp->intDepartment_ID,
                 'intSubDepartment_ID' => null,
-                'txtEmployeeCode' => 'HEAD-001',
-                'txtEmployeeName' => 'Bapak Head MDP',
-                'txtEmail' => 'head.mdp@kalbe.co.id',
+                'txtEmployeeCode' => 'NRS',
+                'txtEmployeeName' => 'Nareswara (NRS)',
+                'txtEmail' => 'nrs@kalbe.co.id',
                 'txtPassword' => $password,
-                'txtPhone' => '6281234567801',
+                'txtPhone' => '6281234567810',
                 'txtRole' => RoleAccess::ROLE_HEAD,
                 'txtPosition' => 'Department Head MDP',
                 'txtInsertedBy' => 'seeder',
@@ -151,53 +151,54 @@ class DatabaseSeeder extends Seeder
                 'bitActive' => true,
             ]);
 
-            // Supervisors
-            $spvIt = MUser::create([
-                'intUser_ID' => 3,
+            // Supervisors:
+            // AMI - Supervisor MD/IT & AM
+            $spvAmi = MUser::create([
+                'intUser_ID' => 10,
                 'intDepartment_ID' => $deptMdp->intDepartment_ID,
                 'intSubDepartment_ID' => 1, // MD/IT
-                'txtEmployeeCode' => 'SPV-001',
-                'txtEmployeeName' => 'Supervisor IT & AM',
-                'txtEmail' => 'spv.it@kalbe.co.id',
+                'txtEmployeeCode' => 'AMI',
+                'txtEmployeeName' => 'Amira (AMI)',
+                'txtEmail' => 'ami@kalbe.co.id',
                 'txtPassword' => $password,
-                'txtPhone' => '6281234567802',
+                'txtPhone' => '6281234567815',
                 'txtRole' => RoleAccess::ROLE_SUPERVISOR,
-                'txtPosition' => 'Supervisor Manufacturing Development',
+                'txtPosition' => 'Supervisor MD/IT & AM',
                 'txtInsertedBy' => 'seeder',
                 'dtmInserted' => $now,
                 'bitActive' => true,
             ]);
 
-            $spvPpic = MUser::create([
-                'intUser_ID' => 4,
+            // SNH - Supervisor MO/PPIC & MP/Project
+            $spvSnh = MUser::create([
+                'intUser_ID' => 7,
                 'intDepartment_ID' => $deptMdp->intDepartment_ID,
                 'intSubDepartment_ID' => 2, // MO/PPIC
-                'txtEmployeeCode' => 'SPV-002',
-                'txtEmployeeName' => 'Supervisor MO & MP',
-                'txtEmail' => 'spv.ppic@kalbe.co.id',
+                'txtEmployeeCode' => 'SNH',
+                'txtEmployeeName' => 'Sania (SNH)',
+                'txtEmail' => 'snh@kalbe.co.id',
                 'txtPassword' => $password,
-                'txtPhone' => '6281234567803',
+                'txtPhone' => '6281234567812',
                 'txtRole' => RoleAccess::ROLE_SUPERVISOR,
-                'txtPosition' => 'Supervisor Manufacturing Operations',
+                'txtPosition' => 'Supervisor MO/PPIC & MP/Project',
                 'txtInsertedBy' => 'seeder',
                 'dtmInserted' => $now,
                 'bitActive' => true,
             ]);
 
             // Map Supervisors to multiple sub-departments
-            TrSupervisorSubDept::create(['intSupervisorSubDept_ID' => 1, 'intUser_ID' => 3, 'intSubDepartment_ID' => 1, 'txtInsertedBy' => 'seeder', 'dtmInserted' => $now]);
-            TrSupervisorSubDept::create(['intSupervisorSubDept_ID' => 2, 'intUser_ID' => 3, 'intSubDepartment_ID' => 3, 'txtInsertedBy' => 'seeder', 'dtmInserted' => $now]);
-            TrSupervisorSubDept::create(['intSupervisorSubDept_ID' => 3, 'intUser_ID' => 4, 'intSubDepartment_ID' => 2, 'txtInsertedBy' => 'seeder', 'dtmInserted' => $now]);
-            TrSupervisorSubDept::create(['intSupervisorSubDept_ID' => 4, 'intUser_ID' => 4, 'intSubDepartment_ID' => 4, 'txtInsertedBy' => 'seeder', 'dtmInserted' => $now]);
+            // AMI supervises MD/IT (1) and AM (3)
+            TrSupervisorSubDept::create(['intSupervisorSubDept_ID' => 1, 'intUser_ID' => 10, 'intSubDepartment_ID' => 1, 'txtInsertedBy' => 'seeder', 'dtmInserted' => $now]);
+            TrSupervisorSubDept::create(['intSupervisorSubDept_ID' => 2, 'intUser_ID' => 10, 'intSubDepartment_ID' => 3, 'txtInsertedBy' => 'seeder', 'dtmInserted' => $now]);
+            // SNH supervises MO/PPIC (2) and MP/Project (4)
+            TrSupervisorSubDept::create(['intSupervisorSubDept_ID' => 3, 'intUser_ID' => 7, 'intSubDepartment_ID' => 2, 'txtInsertedBy' => 'seeder', 'dtmInserted' => $now]);
+            TrSupervisorSubDept::create(['intSupervisorSubDept_ID' => 4, 'intUser_ID' => 7, 'intSubDepartment_ID' => 4, 'txtInsertedBy' => 'seeder', 'dtmInserted' => $now]);
 
-            // Employees (from PDF reference sheet codes: NRS, YJN, SNH, JHN, AHO, AMI, NTO, IHP, DDI, TSJ, WAR, YFG)
+            // Other Employees (from PDF reference sheet codes: YJN, JHN, AHO, NTO, IHP, DDI, TSJ, WAR, YFG)
             $employeesData = [
-                5 => ['code' => 'NRS', 'name' => 'Nareswara (NRS)', 'email' => 'nrs@kalbe.co.id', 'subdept' => 1, 'phone' => '6281234567810', 'pos' => 'Software Engineer'],
                 6 => ['code' => 'YJN', 'name' => 'Yayan (YJN)', 'email' => 'yjn@kalbe.co.id', 'subdept' => 2, 'phone' => '6281234567811', 'pos' => 'PPIC Specialist'],
-                7 => ['code' => 'SNH', 'name' => 'Sania (SNH)', 'email' => 'snh@kalbe.co.id', 'subdept' => 3, 'phone' => '6281234567812', 'pos' => 'Automation Engineer'],
                 8 => ['code' => 'JHN', 'name' => 'Johan (JHN)', 'email' => 'jhn@kalbe.co.id', 'subdept' => 4, 'phone' => '6281234567813', 'pos' => 'Manufacturing Planner'],
                 9 => ['code' => 'AHO', 'name' => 'Anthony (AHO)', 'email' => 'aho@kalbe.co.id', 'subdept' => 1, 'phone' => '6281234567814', 'pos' => 'AI Developer'],
-                10 => ['code' => 'AMI', 'name' => 'Amira (AMI)', 'email' => 'ami@kalbe.co.id', 'subdept' => 1, 'phone' => '6281234567815', 'pos' => 'IT System Developer'],
                 11 => ['code' => 'NTO', 'name' => 'Nanto (NTO)', 'email' => 'nto@kalbe.co.id', 'subdept' => 2, 'phone' => '6281234567816', 'pos' => 'Operations Officer'],
                 12 => ['code' => 'IHP', 'name' => 'Irpan Hidayat (IHP)', 'email' => 'ihp@kalbe.co.id', 'subdept' => 4, 'phone' => '6281234567817', 'pos' => 'Project Specialist'],
                 13 => ['code' => 'DDI', 'name' => 'Dedi (DDI)', 'email' => 'ddi@kalbe.co.id', 'subdept' => 1, 'phone' => '6281234567818', 'pos' => 'DevOps Engineer'],
@@ -591,6 +592,8 @@ class DatabaseSeeder extends Seeder
             $dailyTasks = [
                 ['user_id' => 5, 'project_id' => 1, 'date' => '2026-08-10', 'desc' => 'SENTUL Plant Ampere Check & Cable Measurement', 'output' => 'Report & Ampere log', 'hours' => 2.0, 'progress' => 85, 'status' => 'Completed'],
                 ['user_id' => 5, 'project_id' => 1, 'date' => '2026-08-11', 'desc' => 'SENTUL WA Gateway Webhook Configuration', 'output' => 'Webhook active', 'hours' => 3.0, 'progress' => 90, 'status' => 'Completed'],
+                ['user_id' => 7, 'project_id' => 2, 'date' => '2026-08-11', 'desc' => 'Baseline Energy Audit & Chiller Optimization Analysis', 'output' => 'Energy Audit Report', 'hours' => 3.0, 'progress' => 80, 'status' => 'Completed'],
+                ['user_id' => 7, 'project_id' => 2, 'date' => '2026-08-12', 'desc' => 'Coordination Meeting MO & PPIC Team Schedule Sync', 'output' => 'Action Plan & MoM', 'hours' => 2.0, 'progress' => 100, 'status' => 'Completed'],
                 ['user_id' => 9, 'project_id' => 8, 'sub_id' => 81, 'date' => '2026-08-03', 'desc' => 'Workshop I2MS (E-Promise) Integration test', 'output' => 'API payload mapped', 'hours' => 3.0, 'progress' => 80, 'status' => 'Completed'],
                 ['user_id' => 9, 'project_id' => 8, 'sub_id' => 82, 'date' => '2026-08-04', 'desc' => 'Project Management & Prompt engineering for KIMI Agent', 'output' => 'Tested 10 prompts', 'hours' => 4.0, 'progress' => 75, 'status' => 'In Progress'],
                 ['user_id' => 10, 'project_id' => 10, 'date' => '2026-08-06', 'desc' => 'Training WD & Kalventis Prepare Go Live', 'output' => 'Training log signed', 'hours' => 3.0, 'progress' => 100, 'status' => 'Completed'],
@@ -625,6 +628,7 @@ class DatabaseSeeder extends Seeder
                 3 => ['user_id' => 10, 'title' => 'Week 2: 06 Jul - 10 Jul 2026', 'start' => '2026-07-06', 'end' => '2026-07-10'],
                 4 => ['user_id' => 12, 'title' => 'Week 1: 10 Aug - 14 Aug 2026', 'start' => '2026-08-10', 'end' => '2026-08-14'],
                 5 => ['user_id' => 15, 'title' => 'Week 2: 10 Aug - 14 Aug 2026', 'start' => '2026-08-10', 'end' => '2026-08-14'],
+                6 => ['user_id' => 7, 'title' => 'Week 1: 10 Aug - 14 Aug 2026', 'start' => '2026-08-10', 'end' => '2026-08-14'],
             ];
 
             $actId = 1;
@@ -704,6 +708,38 @@ class DatabaseSeeder extends Seeder
                             'intUser_ID' => $wp['user_id'],
                             'intProject_ID' => $prjId,
                             'intSubProject_ID' => 81,
+                            'dtmActivityDate' => Carbon::parse($date),
+                            'txtDayName' => $day,
+                            'txtStartTime' => $st,
+                            'txtEndTime' => $et,
+                            'floatDuration' => $dur,
+                            'txtActivityName' => $actName,
+                            'txtLocationType' => $loc,
+                            'txtRemarks' => 'Logged via Weekly Activity Plan',
+                            'bitIsCompleted' => true,
+                            'txtInsertedBy' => 'seeder',
+                            'dtmInserted' => $now,
+                        ]);
+                    }
+                }
+
+                // Daily activities for Week 1 (SNH / 7)
+                if ($wId === 6) {
+                    $snhActivities = [
+                        ['Senin', '2026-08-10', '08:00', '11:00', 3.0, 'Energy Audit Plant Chiller & Compressor', 'SENTUL', 2],
+                        ['Selasa', '2026-08-11', '09:00', '12:00', 3.0, 'WWTP & Ice Water Electrical Tuning', 'SENTUL', 2],
+                        ['Rabu', '2026-08-12', '10:00', '12:00', 2.0, 'Coordination Meeting MO & PPIC Team', 'Meeting Room', 2],
+                        ['Kamis', '2026-08-13', '08:30', '11:30', 3.0, 'Supervision MP Project & Timeline Review', 'Office', 2],
+                        ['Jumat', '2026-08-14', '13:30', '15:30', 2.0, 'Weekly KPI Evaluation & S-Curve Reporting', 'Office', 2],
+                    ];
+
+                    foreach ($snhActivities as [$day, $date, $st, $et, $dur, $actName, $loc, $prjId]) {
+                        TrDailyPlanActivity::create([
+                            'intDailyPlanActivity_ID' => $actId++,
+                            'intWeeklyPlan_ID' => $plan->intWeeklyPlan_ID,
+                            'intUser_ID' => $wp['user_id'],
+                            'intProject_ID' => $prjId,
+                            'intSubProject_ID' => null,
                             'dtmActivityDate' => Carbon::parse($date),
                             'txtDayName' => $day,
                             'txtStartTime' => $st,

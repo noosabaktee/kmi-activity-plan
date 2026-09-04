@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,9 +11,10 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
+
 <body class="bg-[#F4F7F4] text-[#222222] font-['Inter',sans-serif] min-h-screen flex items-center justify-center p-4 antialiased">
     <div class="w-full max-w-5xl bg-white rounded-3xl shadow-2xl border border-[#DDE5DD] overflow-hidden grid grid-cols-1 lg:grid-cols-12 min-h-[620px]">
-        
+
         <!-- Left Side: Branding & Quick Stats -->
         <div class="lg:col-span-5 bg-gradient-to-br from-[#006838] via-[#004d29] to-[#00331b] p-8 md:p-10 text-white flex flex-col justify-between relative overflow-hidden">
             <!-- Decorative circles -->
@@ -73,10 +75,10 @@
                 </div>
 
                 @if ($errors->any())
-                    <div class="mb-5 p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center gap-2">
-                        <i class="fa-solid fa-circle-exclamation text-rose-600 text-base"></i>
-                        <span>{{ $errors->first() }}</span>
-                    </div>
+                <div class="mb-5 p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center gap-2">
+                    <i class="fa-solid fa-circle-exclamation text-rose-600 text-base"></i>
+                    <span>{{ $errors->first() }}</span>
+                </div>
                 @endif
 
                 <form action="{{ route('login.authenticate') }}" method="POST" class="space-y-4">
@@ -88,7 +90,7 @@
                             <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-gray-400">
                                 <i class="fa-regular fa-envelope"></i>
                             </span>
-                            <input type="email" id="txtEmail" name="txtEmail" value="{{ old('txtEmail', 'head.mdp@kalbe.co.id') }}" required
+                            <input type="email" id="txtEmail" name="txtEmail" value="{{ old('txtEmail', 'nrs@kalbe.co.id') }}" required
                                 class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-300 text-sm focus:border-[#006838] focus:ring-2 focus:ring-[#006838]/20 outline-none transition"
                                 placeholder="name@kalbe.co.id">
                         </div>
@@ -124,17 +126,17 @@
                 <div class="mt-8 pt-6 border-t border-gray-200">
                     <p class="text-xs text-gray-500 font-semibold mb-2">Akun Demo Cepat (Password: 123456):</p>
                     <div class="grid grid-cols-2 gap-2 text-xs">
-                        <button type="button" onclick="setLogin('head.mdp@kalbe.co.id', '123456')" class="p-2 rounded-lg bg-gray-50 hover:bg-emerald-50 border border-gray-200 text-left transition">
-                            <span class="block font-bold text-[#006838]">Head MDP</span>
-                            <span class="text-[10px] text-gray-500">head.mdp@kalbe.co.id</span>
-                        </button>
-                        <button type="button" onclick="setLogin('spv.it@kalbe.co.id', '123456')" class="p-2 rounded-lg bg-gray-50 hover:bg-emerald-50 border border-gray-200 text-left transition">
-                            <span class="block font-bold text-[#006838]">Supervisor IT/AM</span>
-                            <span class="text-[10px] text-gray-500">spv.it@kalbe.co.id</span>
-                        </button>
                         <button type="button" onclick="setLogin('nrs@kalbe.co.id', '123456')" class="p-2 rounded-lg bg-gray-50 hover:bg-emerald-50 border border-gray-200 text-left transition">
-                            <span class="block font-bold text-[#006838]">Employee (NRS)</span>
-                            <span class="text-[10px] text-gray-500">nrs@kalbe.co.id</span>
+                            <span class="block font-bold text-[#006838]">Dept Head MDP</span>
+                            <span class="text-[10px] text-gray-500">nrs@kalbe.co.id (NRS)</span>
+                        </button>
+                        <button type="button" onclick="setLogin('ami@kalbe.co.id', '123456')" class="p-2 rounded-lg bg-gray-50 hover:bg-emerald-50 border border-gray-200 text-left transition">
+                            <span class="block font-bold text-[#006838]">SPV MD/IT & AM</span>
+                            <span class="text-[10px] text-gray-500">ami@kalbe.co.id (AMI)</span>
+                        </button>
+                        <button type="button" onclick="setLogin('aho@kalbe.co.id', '123456')" class="p-2 rounded-lg bg-gray-50 hover:bg-emerald-50 border border-gray-200 text-left transition">
+                            <span class="block font-bold text-[#006838]">Employee (AHO)</span>
+                            <span class="text-[10px] text-gray-500">aho@kalbe.co.id (AHO)</span>
                         </button>
                         <button type="button" onclick="setLogin('superadmin@kalbe.co.id', '123456')" class="p-2 rounded-lg bg-gray-50 hover:bg-emerald-50 border border-gray-200 text-left transition">
                             <span class="block font-bold text-[#006838]">Superadmin</span>
@@ -147,10 +149,11 @@
     </div>
 
     <script>
-    function setLogin(email, password) {
-        document.getElementById('txtEmail').value = email;
-        document.getElementById('txtPassword').value = password;
-    }
+        function setLogin(email, password) {
+            document.getElementById('txtEmail').value = email;
+            document.getElementById('txtPassword').value = password;
+        }
     </script>
 </body>
+
 </html>

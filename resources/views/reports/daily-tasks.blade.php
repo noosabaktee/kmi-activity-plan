@@ -32,18 +32,20 @@
 
     <!-- Filter Bar -->
     <div class="bg-white p-4 rounded-2xl border border-[#DDE5DD] shadow-xs">
-        <form method="GET" action="{{ route('reports.daily-tasks') }}" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 items-end">
+        <form method="GET" action="{{ route('reports.daily-tasks') }}" class="grid grid-cols-1 {{ $authUser && $authUser->isSuperadmin() ? 'sm:grid-cols-2 md:grid-cols-4' : 'sm:grid-cols-3' }} gap-3 items-end">
+            @if ($authUser && $authUser->isSuperadmin())
             <div>
-                <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Pilih Employee</label>
+                <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Pilih Employee / User</label>
                 <select name="employee" onchange="this.form.submit()" class="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs focus:border-[#006838] outline-none bg-white">
-                    <option value="">Semua Employee</option>
+                    <option value="">Semua User</option>
                     @foreach ($employees as $emp)
                     <option value="{{ $emp->intUser_ID }}" {{ request('employee') == $emp->intUser_ID ? 'selected' : '' }}>
-                        {{ $emp->txtEmployeeName }} ({{ $emp->subDepartment?->txtSubDepartmentCode ?? 'MDP' }})
+                        {{ $emp->txtEmployeeName }} ({{ $emp->subDepartment?->txtSubDepartmentCode ?? $emp->txtRole }})
                     </option>
                     @endforeach
                 </select>
             </div>
+            @endif
 
             <div>
                 <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Pilih Project</label>

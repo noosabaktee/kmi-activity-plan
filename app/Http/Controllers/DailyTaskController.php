@@ -22,7 +22,7 @@ class DailyTaskController extends Controller
 
         $query = TrDailyTask::with(['user', 'project', 'subProject'])->orderBy('dtmTaskDate', 'desc');
 
-        if ($authUser && $authUser->isEmployee()) {
+        if ($authUser && ! $authUser->isSuperadmin()) {
             $query->where('intUser_ID', $authUser->intUser_ID);
         } elseif ($request->filled('employee')) {
             $query->where('intUser_ID', $request->employee);
@@ -42,19 +42,14 @@ class DailyTaskController extends Controller
 
         $tasks = $query->get();
 
-        if ($authUser && $authUser->isEmployee()) {
+        if ($authUser && ! $authUser->isSuperadmin()) {
             $employees = MUser::active()->where('intUser_ID', $authUser->intUser_ID)->get();
             $projectsQuery = MProject::with(['subProjects.assignments.user', 'assignments.user', 'user'])
                 ->where('bitActive', true)
                 ->forUser($authUser->intUser_ID);
         } else {
-            $employees = MUser::active()->where('txtRole', 'Employee')->orderBy('txtEmployeeName')->get();
+            $employees = MUser::active()->where('txtRole', '!=', 'Superadmin')->orderBy('txtEmployeeName')->get();
             $projectsQuery = MProject::with(['subProjects.assignments.user', 'assignments.user', 'user'])->where('bitActive', true);
-
-            if ($authUser && ! $authUser->isSuperadmin()) {
-                $departmentId = $authUser->intDepartment_ID ?: 1;
-                $projectsQuery->where('intDepartment_ID', $departmentId);
-            }
 
             if ($request->filled('employee')) {
                 $projectsQuery->forUser($request->employee);
@@ -137,7 +132,7 @@ class DailyTaskController extends Controller
             $taskId = ! empty($row['id']) ? (int) $row['id'] : null;
             $userId = ! empty($row['employeeId']) ? (int) $row['employeeId'] : $currentUserId;
 
-            if ($currentUser && $currentUser->isEmployee()) {
+            if ($currentUser && ! $currentUser->isSuperadmin()) {
                 $userId = $currentUser->intUser_ID;
             }
 
@@ -156,6 +151,9 @@ class DailyTaskController extends Controller
             ];
 
             if ($taskId && ($task = TrDailyTask::find($taskId))) {
+                if ($currentUser && ! $currentUser->isSuperadmin() && $task->intUser_ID !== $currentUser->intUser_ID) {
+                    continue;
+                }
                 $task->update($data);
             } else {
                 TrDailyTask::create($data);
@@ -172,9 +170,14 @@ class DailyTaskController extends Controller
 
     public function exportExcel(Request $request): StreamedResponse
     {
+        $authUserId = session('auth_user_id');
+        $authUser = MUser::find($authUserId);
+
         $query = TrDailyTask::with(['user', 'project', 'subProject'])->orderBy('dtmTaskDate', 'desc');
 
-        if ($request->filled('employee')) {
+        if ($authUser && ! $authUser->isSuperadmin()) {
+            $query->where('intUser_ID', $authUser->intUser_ID);
+        } elseif ($request->filled('employee')) {
             $query->where('intUser_ID', $request->employee);
         }
         if ($request->filled('project')) {

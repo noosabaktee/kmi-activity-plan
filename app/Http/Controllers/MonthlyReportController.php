@@ -51,7 +51,7 @@ class MonthlyReportController extends Controller
         $projects = $query->get();
 
         $subDepartments = MSubDepartment::active()->orderBy('txtSubDepartmentCode')->get();
-        $allEmployees = MUser::active()->where('txtRole', 'Employee')->orderBy('txtEmployeeName')->get();
+        $allEmployees = MUser::active()->where('txtRole', '!=', 'Superadmin')->orderBy('txtEmployeeName')->get();
         $projectTypes = MProjectType::active()->orderBy('txtProjectTypeCode')->get();
 
         // 1. Summary KPIs

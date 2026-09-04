@@ -22,16 +22,16 @@
         </div>
     </div>
 
-    <!-- Filter Employee (if Admin / SPV / Head) -->
-    @if (! $authUser->isEmployee())
+    <!-- Filter Employee (if Superadmin) -->
+    @if ($authUser && $authUser->isSuperadmin())
     <div class="bg-white p-4 rounded-2xl border border-[#DDE5DD] shadow-xs flex items-center justify-between">
         <form method="GET" action="{{ route('reports.daily-plans') }}" class="flex items-center gap-3 w-full sm:w-auto">
-            <label class="text-xs font-bold text-gray-600 shrink-0">Filter Employee:</label>
+            <label class="text-xs font-bold text-gray-600 shrink-0">Filter User / PIC:</label>
             <select name="employee" onchange="this.form.submit()" class="px-3.5 py-1.5 rounded-xl border border-gray-200 text-xs focus:border-[#006838] outline-none">
-                <option value="">Semua Employee</option>
+                <option value="">Semua User</option>
                 @foreach ($employees as $emp)
                 <option value="{{ $emp->intUser_ID }}" {{ request('employee') == $emp->intUser_ID ? 'selected' : '' }}>
-                    {{ $emp->txtEmployeeName }} ({{ $emp->subDepartment?->txtSubDepartmentCode ?? 'MDP' }})
+                    {{ $emp->txtEmployeeName }} ({{ $emp->subDepartment?->txtSubDepartmentCode ?? $emp->txtRole }})
                 </option>
                 @endforeach
             </select>
@@ -140,13 +140,13 @@
                 </div>
             </div>
 
-            @if (! $authUser->isEmployee())
+            @if ($authUser && $authUser->isSuperadmin())
             <div>
-                <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Employee PIC</label>
+                <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">User PIC</label>
                 <select name="intUser_ID" class="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-xs focus:border-[#006838] outline-none">
                     @foreach ($employees as $emp)
                     <option value="{{ $emp->intUser_ID }}" {{ $authUser->intUser_ID == $emp->intUser_ID ? 'selected' : '' }}>
-                        {{ $emp->txtEmployeeName }} ({{ $emp->subDepartment?->txtSubDepartmentCode ?? 'MDP' }})
+                        {{ $emp->txtEmployeeName }} ({{ $emp->subDepartment?->txtSubDepartmentCode ?? $emp->txtRole }})
                     </option>
                     @endforeach
                 </select>

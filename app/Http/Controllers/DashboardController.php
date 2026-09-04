@@ -39,7 +39,7 @@ class DashboardController extends Controller
         $projects = $projectQuery->get();
         $employees = MUser::where('bitActive', true)
             ->where('intDepartment_ID', $departmentId)
-            ->where('txtRole', 'Employee')
+            ->where('txtRole', '!=', 'Superadmin')
             ->get();
 
         $subDepartments = MSubDepartment::where('intDepartment_ID', $departmentId)
