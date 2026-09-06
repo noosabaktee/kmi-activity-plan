@@ -21,9 +21,14 @@
 
     <!-- Summary Metrics Bar (Strictly 1 Single Row) -->
     <div class="grid grid-cols-5 gap-3">
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         <div class="bg-white p-3.5 sm:p-4 rounded-2xl border border-[#DDE5DD] shadow-2xs min-w-0">
             <span class="text-[10px] sm:text-[11px] font-bold text-gray-400 uppercase tracking-wider block truncate">Total Ad Hoc</span>
             <div class="text-lg sm:text-xl font-black text-[#006838] mt-0.5">{{ $summary['total'] }}</div>
+        </div>
+        <div class="bg-white p-3.5 sm:p-4 rounded-2xl border border-amber-200 bg-amber-50/20 shadow-2xs min-w-0">
+            <span class="text-[10px] sm:text-[11px] font-bold text-amber-700 uppercase tracking-wider block truncate">Menunggu ACC</span>
+            <div class="text-lg sm:text-xl font-black text-amber-600 mt-0.5">{{ $summary['pendingApproval'] ?? 0 }}</div>
         </div>
         <div class="bg-white p-3.5 sm:p-4 rounded-2xl border border-[#DDE5DD] shadow-2xs min-w-0">
             <span class="text-[10px] sm:text-[11px] font-bold text-gray-400 uppercase tracking-wider block truncate">Sedang Ditangani</span>
@@ -44,8 +49,10 @@
     </div>
 
     <!-- Filters & Search Toolbar (Without Sub Dept & PIC) -->
+    <!-- Filters & Search Toolbar -->
     <div class="bg-white p-4 rounded-2xl border border-[#DDE5DD] shadow-xs">
         <form method="GET" action="{{ route('adhocs.index') }}" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+        <form method="GET" action="{{ route('adhocs.index') }}" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3">
             <div>
                 <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Kategori Ad Hoc</label>
                 <select name="category" onchange="this.form.submit()" class="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs focus:border-[#006838] outline-none bg-white">
@@ -71,6 +78,17 @@
 
             <div>
                 <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Status</label>
+                <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Status Approval</label>
+                <select name="approval_status" onchange="this.form.submit()" class="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs focus:border-[#006838] outline-none bg-white">
+                    <option value="">Semua Approval</option>
+                    <option value="Pending Approval" {{ request('approval_status') == 'Pending Approval' ? 'selected' : '' }}>Menunggu ACC</option>
+                    <option value="Approved" {{ request('approval_status') == 'Approved' ? 'selected' : '' }}>Disetujui (Approved)</option>
+                    <option value="Rejected" {{ request('approval_status') == 'Rejected' ? 'selected' : '' }}>Ditolak / Revisi</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Status Pelaksanaan</label>
                 <select name="status" onchange="this.form.submit()" class="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs focus:border-[#006838] outline-none bg-white">
                     <option value="">Semua Status</option>
                     <option value="In Progress" {{ request('status') == 'In Progress' ? 'selected' : '' }}>In Progress</option>
@@ -89,6 +107,7 @@
                         <i class="fa-solid fa-magnifying-glass absolute left-2.5 top-2.5 text-gray-400 text-xs"></i>
                     </div>
                     @if (request()->hasAny(['category', 'urgency', 'status', 'search']))
+                    @if (request()->hasAny(['category', 'urgency', 'status', 'approval_status', 'search']))
                     <a href="{{ route('adhocs.index') }}" class="px-2.5 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-600 text-xs font-bold transition flex items-center gap-1 shrink-0 no-underline" title="Reset Filter">
                         <i class="fa-solid fa-rotate-left"></i>
                         <span>Reset</span>
@@ -198,8 +217,14 @@
                                     <p class="text-[10px] text-gray-400 m-0 truncate">{{ $adhoc->subDepartment?->txtSubDepartmentCode ?? 'MDP' }}</p>
                                 </div>
                             </div>
+                            @if ($adhoc->supervisor)
+                            <div class="mt-1 text-[10px] text-gray-500 font-medium truncate" title="Supervisor ACC: {{ $adhoc->supervisor->txtEmployeeName }}">
+                                <i class="fa-solid fa-user-tie text-gray-400 mr-1"></i>Spv: {{ $adhoc->supervisor->txtEmployeeName }}
+                            </div>
+                            @endif
                             @if ($adhoc->assignments->count() > 0)
                             <div class="mt-1.5 flex items-center gap-1 text-[10px] text-emerald-800 font-semibold">
+                            <div class="mt-0.5 flex items-center gap-1 text-[10px] text-emerald-800 font-semibold">
                                 <i class="fa-solid fa-users text-[9px]"></i>
                                 <span>+{{ $adhoc->assignments->count() }} Anggota Tim</span>
                             </div>
@@ -221,6 +246,18 @@
                         </td>
 
                         <td class="px-4 py-3.5 text-center">
+                        <td class="px-4 py-3.5 text-center space-y-1">
+                            @if ($adhoc->isPendingApproval())
+                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black border bg-amber-100 text-amber-900 border-amber-300">
+                                <i class="fa-solid fa-hourglass-half text-amber-600 text-[9px]"></i>
+                                <span>Menunggu ACC</span>
+                            </span>
+                            @elseif ($adhoc->isRejected())
+                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black border bg-rose-100 text-rose-900 border-rose-300">
+                                <i class="fa-solid fa-circle-xmark text-rose-600 text-[9px]"></i>
+                                <span>Ditolak</span>
+                            </span>
+                            @else
                             @php
                             $status = $adhoc->txtStatus ?: 'In Progress';
                             $statusClass = match(strtolower($status)) {
@@ -231,12 +268,22 @@
                             };
                             @endphp
                             <span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold border {{ $statusClass }}">
+                            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold border {{ $statusClass }} block truncate">
                                 {{ $status }}
                             </span>
+                            @endif
                         </td>
 
                         <td class="px-4 py-3.5 text-center">
                             <div class="flex items-center justify-center gap-1.5">
+                                @if ($adhoc->isPendingApproval() && $authUser && $authUser->canApproveAdHoc($adhoc))
+                                <form action="{{ route('adhocs.approve', $adhoc) }}" method="POST" class="inline" onsubmit="return confirm('ACC / Setujui inisiatif Ad Hoc ini?')">
+                                    @csrf
+                                    <button type="submit" class="w-7 h-7 rounded-lg bg-emerald-100 hover:bg-[#006838] text-emerald-800 hover:text-white flex items-center justify-center transition border border-emerald-300 shadow-2xs cursor-pointer" title="ACC / Setujui Ad Hoc">
+                                        <i class="fa-solid fa-check text-xs"></i>
+                                    </button>
+                                </form>
+                                @endif
                                 <a href="{{ route('adhocs.show', $adhoc) }}" class="w-7 h-7 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-[#006838] flex items-center justify-center transition border border-emerald-200 shadow-2xs" title="Lihat Detail">
                                     <i class="fa-solid fa-eye text-xs"></i>
                                 </a>

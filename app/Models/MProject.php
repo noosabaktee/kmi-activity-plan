@@ -53,6 +53,11 @@ class MProject extends Model
         'txtAdHocCategory',
         'txtPriority',
         'txtSpecialGoal',
+        'txtApprovalStatus',
+        'intSupervisor_ID',
+        'intApprovedBy_ID',
+        'dtmApprovedAt',
+        'txtApprovalNotes',
     ];
 
     protected $casts = [
@@ -61,11 +66,14 @@ class MProject extends Model
         'floatActual' => 'float',
         'intScore' => 'integer',
         'intSkillset_ID' => 'integer',
+        'intSupervisor_ID' => 'integer',
+        'intApprovedBy_ID' => 'integer',
         'bitHasSubProject' => 'boolean',
         'bitActive' => 'boolean',
         'bitIsAdHoc' => 'boolean',
         'dtmProjectStartDate' => 'datetime',
         'dtmProjectEndDate' => 'datetime',
+        'dtmApprovedAt' => 'datetime',
         'dtmInserted' => 'datetime',
         'dtmUpdated' => 'datetime',
     ];
@@ -93,6 +101,16 @@ class MProject extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(MUser::class, 'intUser_ID', 'intUser_ID');
+    }
+
+    public function supervisor(): BelongsTo
+    {
+        return $this->belongsTo(MUser::class, 'intSupervisor_ID', 'intUser_ID');
+    }
+
+    public function approvedBy(): BelongsTo
+    {
+        return $this->belongsTo(MUser::class, 'intApprovedBy_ID', 'intUser_ID');
     }
 
     public function assignments(): HasMany
@@ -232,6 +250,26 @@ class MProject extends Model
                 $sq->whereNull('bitIsAdHoc')->orWhere('bitIsAdHoc', false);
             })->where('intProjectType_ID', '!=', 5);
         });
+    }
+
+    public function isPendingApproval(): bool
+    {
+        return $this->txtApprovalStatus === 'Pending Approval';
+    }
+
+    public function isApproved(): bool
+    {
+        return empty($this->txtApprovalStatus) || $this->txtApprovalStatus === 'Approved';
+    }
+
+    public function isRejected(): bool
+    {
+        return $this->txtApprovalStatus === 'Rejected';
+    }
+
+    public function scopePendingApproval(Builder $query): Builder
+    {
+        return $query->where('txtApprovalStatus', 'Pending Approval');
     }
 }
 

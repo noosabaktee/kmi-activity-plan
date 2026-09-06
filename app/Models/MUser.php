@@ -134,6 +134,27 @@ class MUser extends Model
         return $this->txtRole === 'Superadmin';
     }
 
+    public function canApproveAdHoc(MProject $adhoc): bool
+    {
+        if ($this->isSuperadmin() || $this->isHead()) {
+            return true;
+        }
+
+        if ($this->isSupervisor()) {
+            if ($adhoc->intSupervisor_ID && (int) $adhoc->intSupervisor_ID === (int) $this->intUser_ID) {
+                return true;
+            }
+
+            if ($adhoc->intSubDepartment_ID && $this->supervisedSubDepartments()->where('mSubDepartment.intSubDepartment_ID', $adhoc->intSubDepartment_ID)->exists()) {
+                return true;
+            }
+
+            return (int) $this->intDepartment_ID === (int) $adhoc->intDepartment_ID;
+        }
+
+        return false;
+    }
+
     public function scopeActive(Builder $query): Builder
     {
         return $query->where('bitActive', true);

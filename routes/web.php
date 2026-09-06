@@ -40,6 +40,8 @@ Route::middleware('kmi.auth')->group(function () {
     // 2. Exposure S-Curve
     // 2. Ad Hoc Initiatives
     Route::resource('adhocs', AdHocController::class);
+    Route::post('adhocs/{adhoc}/approve', [AdHocController::class, 'approve'])->name('adhocs.approve');
+    Route::post('adhocs/{adhoc}/reject', [AdHocController::class, 'reject'])->name('adhocs.reject');
 
     // 3. Exposure S-Curve
     Route::get('exposure', [ExposureController::class, 'index'])->name('exposure.index');
