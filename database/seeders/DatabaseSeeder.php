@@ -788,6 +788,9 @@ class DatabaseSeeder extends Seeder
                 'dtmInserted' => $now,
                 'bitActive' => true,
             ]);
+
+            // 9. Seed Ad Hoc Initiatives
+            $this->call(AdHocSeeder::class);
         });
     }
 

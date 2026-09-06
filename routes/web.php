@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AdHocController;
 use App\Http\Controllers\AuthPageController;
 use App\Http\Controllers\DailyPlanController;
 use App\Http\Controllers\DailyTaskController;
@@ -13,6 +14,7 @@ use App\Http\Controllers\WaSchedulerController;
 use Illuminate\Support\Facades\Route;
 
 Route::pattern('project', '[0-9]+');
+Route::pattern('adhoc', '[0-9]+');
 Route::pattern('dailyPlan', '[0-9]+');
 Route::pattern('dailyTask', '[0-9]+');
 Route::pattern('activity', '[0-9]+');
@@ -36,6 +38,10 @@ Route::middleware('kmi.auth')->group(function () {
     Route::resource('projects', ProjectController::class);
 
     // 2. Exposure S-Curve
+    // 2. Ad Hoc Initiatives
+    Route::resource('adhocs', AdHocController::class);
+
+    // 3. Exposure S-Curve
     Route::get('exposure', [ExposureController::class, 'index'])->name('exposure.index');
 
     // 3. Reports

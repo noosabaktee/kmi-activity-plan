@@ -35,6 +35,7 @@ class ProjectController extends Controller
             'subProjects.assignments.user',
             'directStages',
         ])
+            ->standardProjects()
             ->where('bitActive', true);
 
         if (! $authUser->isSuperadmin()) {
@@ -73,6 +74,7 @@ class ProjectController extends Controller
 
         $projects = $query->orderBy('txtProjectName')->get();
         $projectTypes = MProjectType::where('bitActive', true)->get();
+        $projectTypes = MProjectType::where('bitActive', true)->where('intProjectType_ID', '!=', 5)->get();
         $skillsets = MSkillset::where('bitActive', true)->orderBy('txtSkillsetName')->get();
         $subDepartments = MSubDepartment::where('intDepartment_ID', $departmentId)->where('bitActive', true)->get();
         $employees = MUser::where('bitActive', true)->where('intDepartment_ID', $departmentId)->get();
@@ -94,6 +96,7 @@ class ProjectController extends Controller
         $departmentId = $authUser->intDepartment_ID ?: 1;
 
         $projectTypes = MProjectType::where('bitActive', true)->get();
+        $projectTypes = MProjectType::where('bitActive', true)->where('intProjectType_ID', '!=', 5)->get();
         $skillsets = MSkillset::where('bitActive', true)->orderBy('txtSkillsetName')->get();
         $subDepartments = MSubDepartment::where('intDepartment_ID', $departmentId)->where('bitActive', true)->get();
         $employees = MUser::where('bitActive', true)->where('intDepartment_ID', $departmentId)->get();
@@ -326,6 +329,7 @@ class ProjectController extends Controller
             'directStages',
         ]);
         $projectTypes = MProjectType::where('bitActive', true)->get();
+        $projectTypes = MProjectType::where('bitActive', true)->where('intProjectType_ID', '!=', 5)->get();
         $skillsets = MSkillset::where('bitActive', true)->orderBy('txtSkillsetName')->get();
         $subDepartments = MSubDepartment::where('intDepartment_ID', $departmentId)->where('bitActive', true)->get();
         $employees = MUser::where('bitActive', true)->where('intDepartment_ID', $departmentId)->get();

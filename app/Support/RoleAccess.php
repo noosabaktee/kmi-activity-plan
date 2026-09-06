@@ -54,6 +54,8 @@ class RoleAccess
             'dashboard' => true,
             'projects' => true,
             'crud-projects' => true, // Employees can CRUD projects they handle
+            'adhocs' => true,
+            'adhoc' => true,
             'exposure' => true,
             'reports' => true,
             'daily-tasks' => true,

@@ -198,6 +198,9 @@
                         <option value="">Tidak dikaitkan</option>
                         @foreach ($projects as $prj)
                         <option value="{{ $prj->intProject_ID }}">{{ $prj->txtProjectName }}</option>
+                        <option value="{{ $prj->intProject_ID }}">
+                            {{ $prj->isAdHoc() ? '[Ad Hoc] ' : '' }}{{ $prj->txtProjectName }}
+                        </option>
                         @endforeach
                     </select>
                     @if ($projects->isEmpty())

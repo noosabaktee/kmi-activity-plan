@@ -44,6 +44,15 @@ $isMasterActive = request()->routeIs('master.*');
         @endif
 
         <!-- 3. Exposure S-Curve -->
+        <!-- 3. Ad Hoc -->
+        @if ($can('adhoc'))
+        <a href="{{ route('adhocs.index') }}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium text-sm transition-all {{ request()->routeIs('adhocs.*') ? 'bg-[#8CC63F] text-[#004d29] font-bold shadow-md' : 'text-white/80 hover:bg-white/10 hover:text-white' }}">
+            <i class="fa-solid fa-bolt w-5 text-center text-base text-teal-300 {{ request()->routeIs('adhocs.*') ? 'text-[#004d29]' : '' }}"></i>
+            <span>Ad Hoc</span>
+        </a>
+        @endif
+
+        <!-- 4. Exposure S-Curve -->
         @if ($can('exposure'))
         <a href="{{ route('exposure.index') }}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium text-sm transition-all {{ request()->routeIs('exposure.index') ? 'bg-[#8CC63F] text-[#004d29] font-bold shadow-md' : 'text-white/80 hover:bg-white/10 hover:text-white' }}">
             <i class="fa-solid fa-chart-line w-5 text-center text-base"></i>

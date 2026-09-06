@@ -49,6 +49,10 @@ class MProject extends Model
         'txtUpdatedBy',
         'dtmUpdated',
         'bitActive',
+        'bitIsAdHoc',
+        'txtAdHocCategory',
+        'txtPriority',
+        'txtSpecialGoal',
     ];
 
     protected $casts = [
@@ -59,6 +63,7 @@ class MProject extends Model
         'intSkillset_ID' => 'integer',
         'bitHasSubProject' => 'boolean',
         'bitActive' => 'boolean',
+        'bitIsAdHoc' => 'boolean',
         'dtmProjectStartDate' => 'datetime',
         'dtmProjectEndDate' => 'datetime',
         'dtmInserted' => 'datetime',
@@ -206,4 +211,27 @@ class MProject extends Model
                 });
         });
     }
+
+    public function isAdHoc(): bool
+    {
+        return (bool) $this->bitIsAdHoc || (int) $this->intProjectType_ID === 5;
+    }
+
+    public function scopeAdHoc(Builder $query): Builder
+    {
+        return $query->where(function ($q) {
+            $q->where('bitIsAdHoc', true)
+                ->orWhere('intProjectType_ID', 5);
+        });
+    }
+
+    public function scopeStandardProjects(Builder $query): Builder
+    {
+        return $query->where(function ($q) {
+            $q->where(function ($sq) {
+                $sq->whereNull('bitIsAdHoc')->orWhere('bitIsAdHoc', false);
+            })->where('intProjectType_ID', '!=', 5);
+        });
+    }
 }
+
