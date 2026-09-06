@@ -149,6 +149,235 @@ class MonthlyReportController extends Controller
             $chartSubDeptProjectCount[] = $sdProjects->count();
         }
 
+        // 5b. Dataset: Year to Date (YTD) - Project (IPP, MAR, IDP, Routine) vs Ad Hoc Dominance
+        $reportYear = $monthCarbon->year;
+        $startOfYear = Carbon::create($reportYear, 1, 1)->startOfDay();
+        $endOfYtd = $monthCarbon->copy()->endOfMonth()->endOfDay();
+
+        $ytdTaskQuery = TrDailyTask::with(['project.projectType', 'projectType'])
+            ->whereBetween('dtmTaskDate', [$startOfYear->toDateString(), $endOfYtd->toDateString()]);
+
+        if ($selectedSubDept) {
+            $ytdTaskQuery->where('intSubDepartment_ID', $selectedSubDept);
+        }
+        if ($selectedEmployee) {
+            $ytdTaskQuery->where('intUser_ID', $selectedEmployee);
+        }
+        $ytdTasks = $ytdTaskQuery->get();
+
+        $categories = [
+            'Ad Hoc' => [
+                'code' => 'Ad Hoc',
+                'name' => 'Inisiatif Ad Hoc',
+                'shortName' => 'Ad Hoc',
+                'color' => '#0D9488',
+                'bgLight' => 'bg-teal-50',
+                'textLight' => 'text-teal-700',
+                'borderLight' => 'border-teal-200',
+                'icon' => 'fa-solid fa-bolt',
+                'hours' => 0.0,
+                'tasks' => 0,
+                'projects' => 0,
+            ],
+            'IPP' => [
+                'code' => 'IPP',
+                'name' => 'Individual Performance Plan',
+                'shortName' => 'IPP',
+                'color' => '#006838',
+                'bgLight' => 'bg-emerald-50',
+                'textLight' => 'text-[#006838]',
+                'borderLight' => 'border-emerald-200',
+                'icon' => 'fa-solid fa-bullseye',
+                'hours' => 0.0,
+                'tasks' => 0,
+                'projects' => 0,
+            ],
+            'MAR' => [
+                'code' => 'MAR',
+                'name' => 'MAR Bersama',
+                'shortName' => 'MAR',
+                'color' => '#7C3AED',
+                'bgLight' => 'bg-purple-50',
+                'textLight' => 'text-purple-700',
+                'borderLight' => 'border-purple-200',
+                'icon' => 'fa-solid fa-people-arrows',
+                'hours' => 0.0,
+                'tasks' => 0,
+                'projects' => 0,
+            ],
+            'IDP' => [
+                'code' => 'IDP',
+                'name' => 'Individual Development Planning',
+                'shortName' => 'IDP',
+                'color' => '#2563EB',
+                'bgLight' => 'bg-blue-50',
+                'textLight' => 'text-blue-700',
+                'borderLight' => 'border-blue-200',
+                'icon' => 'fa-solid fa-graduation-cap',
+                'hours' => 0.0,
+                'tasks' => 0,
+                'projects' => 0,
+            ],
+            'Routine' => [
+                'code' => 'Routine',
+                'name' => 'Routine Operations',
+                'shortName' => 'Routine',
+                'color' => '#F59E0B',
+                'bgLight' => 'bg-amber-50',
+                'textLight' => 'text-amber-700',
+                'borderLight' => 'border-amber-200',
+                'icon' => 'fa-solid fa-rotate',
+                'hours' => 0.0,
+                'tasks' => 0,
+                'projects' => 0,
+            ],
+        ];
+
+        foreach ($ytdTasks as $task) {
+            $isAdHoc = false;
+            if ($task->project && $task->project->isAdHoc()) {
+                $isAdHoc = true;
+            } elseif ($task->intProjectType_ID === 5 || ($task->projectType && (strcasecmp($task->projectType->txtProjectTypeCode, 'Ad Hoc') === 0 || stripos($task->projectType->txtProjectTypeName, 'Ad Hoc') !== false))) {
+                $isAdHoc = true;
+            }
+
+            if ($isAdHoc) {
+                $catKey = 'Ad Hoc';
+            } else {
+                $typeCode = $task->project?->projectType?->txtProjectTypeCode ?? $task->projectType?->txtProjectTypeCode ?? '';
+                $typeName = $task->project?->projectType?->txtProjectTypeName ?? $task->projectType?->txtProjectTypeName ?? '';
+                if (stripos($typeCode, 'MAR') !== false || stripos($typeName, 'MAR') !== false) {
+                    $catKey = 'MAR';
+                } elseif (stripos($typeCode, 'IPP') !== false || stripos($typeName, 'Individual Performance') !== false) {
+                    $catKey = 'IPP';
+                } elseif (stripos($typeCode, 'IDP') !== false || stripos($typeName, 'Development') !== false) {
+                    $catKey = 'IDP';
+                } elseif (stripos($typeCode, 'Routine') !== false || stripos($typeName, 'Routine') !== false) {
+                    $catKey = 'Routine';
+                } else {
+                    $catKey = 'IPP';
+                }
+            }
+
+            $categories[$catKey]['hours'] += (float) ($task->floatDurationHours ?: 0);
+            $categories[$catKey]['tasks'] += 1;
+        }
+
+        // Count active projects by category
+        $ytdProjectQuery = MProject::with('projectType')->active();
+        if ($selectedSubDept) {
+            $ytdProjectQuery->where('intSubDepartment_ID', $selectedSubDept);
+        }
+        if ($selectedEmployee) {
+            $ytdProjectQuery->forUser($selectedEmployee);
+        }
+        $ytdProjects = $ytdProjectQuery->get();
+
+        foreach ($ytdProjects as $p) {
+            if ($p->isAdHoc()) {
+                $categories['Ad Hoc']['projects'] += 1;
+            } else {
+                $typeCode = $p->projectType?->txtProjectTypeCode ?? '';
+                $typeName = $p->projectType?->txtProjectTypeName ?? '';
+                if (stripos($typeCode, 'MAR') !== false || stripos($typeName, 'MAR') !== false) {
+                    $catKey = 'MAR';
+                } elseif (stripos($typeCode, 'IPP') !== false || stripos($typeName, 'Individual Performance') !== false) {
+                    $catKey = 'IPP';
+                } elseif (stripos($typeCode, 'IDP') !== false || stripos($typeName, 'Development') !== false) {
+                    $catKey = 'IDP';
+                } elseif (stripos($typeCode, 'Routine') !== false || stripos($typeName, 'Routine') !== false) {
+                    $catKey = 'Routine';
+                } else {
+                    $catKey = 'IPP';
+                }
+                $categories[$catKey]['projects'] += 1;
+            }
+        }
+
+        $totalYtdHours = (float) array_sum(array_column($categories, 'hours'));
+        $totalYtdTasks = (int) array_sum(array_column($categories, 'tasks'));
+        $totalYtdProjects = (int) array_sum(array_column($categories, 'projects'));
+
+        foreach ($categories as $k => $c) {
+            $categories[$k]['hours'] = round($c['hours'], 1);
+            $categories[$k]['hours_pct'] = $totalYtdHours > 0 ? round(($c['hours'] / $totalYtdHours) * 100, 1) : 0;
+            $categories[$k]['tasks_pct'] = $totalYtdTasks > 0 ? round(($c['tasks'] / $totalYtdTasks) * 100, 1) : 0;
+        }
+
+        $adHocHours = $categories['Ad Hoc']['hours'];
+        $adHocTasks = $categories['Ad Hoc']['tasks'];
+        $adHocProjects = $categories['Ad Hoc']['projects'];
+        $adHocPct = $categories['Ad Hoc']['hours_pct'];
+
+        $plannedHours = round($totalYtdHours - $adHocHours, 1);
+        $plannedTasks = $totalYtdTasks - $adHocTasks;
+        $plannedProjects = $totalYtdProjects - $adHocProjects;
+        $plannedPct = $totalYtdHours > 0 ? round(($plannedHours / $totalYtdHours) * 100, 1) : 0;
+
+        // Dominance determination
+        if ($totalYtdHours > 0) {
+            if ($adHocHours > $plannedHours) {
+                $dominantType = 'Ad Hoc';
+                $dominantLabel = 'Ad Hoc Lebih Dominan';
+                $dominantBadgeClass = 'bg-teal-50 text-teal-700 border-teal-200';
+                $dominantIcon = 'fa-solid fa-bolt text-teal-600';
+                $dominantMessage = "{$adHocPct}% jam kerja YTD dialokasikan untuk inisiatif Ad Hoc ({$adHocHours} Jam), melampaui gabungan project terencana ({$plannedHours} Jam).";
+            } elseif ($plannedHours > $adHocHours) {
+                $dominantType = 'Planned';
+                $dominantLabel = 'Project Terencana Lebih Dominan';
+                $dominantBadgeClass = 'bg-emerald-50 text-[#006838] border-emerald-200';
+                $dominantIcon = 'fa-solid fa-bullseye text-[#006838]';
+                $dominantMessage = "{$plannedPct}% jam kerja YTD dialokasikan untuk project terencana IPP, MAR, IDP ({$plannedHours} Jam) dibanding Ad Hoc ({$adHocHours} Jam).";
+            } else {
+                $dominantType = 'Tied';
+                $dominantLabel = 'Beban Kerja Seimbang';
+                $dominantBadgeClass = 'bg-blue-50 text-blue-700 border-blue-200';
+                $dominantIcon = 'fa-solid fa-scale-balanced text-blue-600';
+                $dominantMessage = "Alokasi jam kerja YTD seimbang 50:50 antara Ad Hoc ({$adHocHours} Jam) dan project terencana ({$plannedHours} Jam).";
+            }
+        } else {
+            if ($adHocProjects > $plannedProjects) {
+                $dominantType = 'Ad Hoc';
+                $dominantLabel = 'Ad Hoc Lebih Dominan';
+                $dominantBadgeClass = 'bg-teal-50 text-teal-700 border-teal-200';
+                $dominantIcon = 'fa-solid fa-bolt text-teal-600';
+                $dominantMessage = "Inisiatif Ad Hoc mendominasi dengan {$adHocProjects} inisiatif terdaftar vs {$plannedProjects} project terencana.";
+            } else {
+                $dominantType = 'Planned';
+                $dominantLabel = 'Project Terencana Lebih Dominan';
+                $dominantBadgeClass = 'bg-emerald-50 text-[#006838] border-emerald-200';
+                $dominantIcon = 'fa-solid fa-bullseye text-[#006838]';
+                $dominantMessage = "Project terencana mendominasi dengan {$plannedProjects} project terdaftar vs {$adHocProjects} inisiatif Ad Hoc.";
+            }
+        }
+
+        $ytdData = [
+            'year' => $reportYear,
+            'periodLabel' => 'Jan - ' . $monthCarbon->translatedFormat('M Y'),
+            'totalHours' => $totalYtdHours,
+            'totalTasks' => $totalYtdTasks,
+            'totalProjects' => $totalYtdProjects,
+            'adHocHours' => $adHocHours,
+            'adHocTasks' => $adHocTasks,
+            'adHocProjects' => $adHocProjects,
+            'adHocPct' => $adHocPct,
+            'plannedHours' => $plannedHours,
+            'plannedTasks' => $plannedTasks,
+            'plannedProjects' => $plannedProjects,
+            'plannedPct' => $plannedPct,
+            'dominantType' => $dominantType,
+            'dominantLabel' => $dominantLabel,
+            'dominantBadgeClass' => $dominantBadgeClass,
+            'dominantIcon' => $dominantIcon,
+            'dominantMessage' => $dominantMessage,
+            'categories' => $categories,
+            'chartLabels' => array_keys($categories),
+            'chartHours' => array_values(array_map(fn($c) => $c['hours'], $categories)),
+            'chartTasks' => array_values(array_map(fn($c) => $c['tasks'], $categories)),
+            'chartProjects' => array_values(array_map(fn($c) => $c['projects'], $categories)),
+            'chartColors' => array_values(array_map(fn($c) => $c['color'], $categories)),
+        ];
+
         // 6. Employee Performance Summary Cards
         $employeeCards = $allEmployees->map(function ($emp) {
             $empProjects = MProject::where('intUser_ID', $emp->intUser_ID)->active()->get();
@@ -183,6 +412,7 @@ class MonthlyReportController extends Controller
             'completedProjectsCount' => $completedProjectsCount,
             'completionRate' => $completionRate,
             'employees' => $employeeCards,
+            'ytdData' => $ytdData,
             // Chart Payloads
             'chartPayload' => [
                 'projectLabels' => $chartProjectLabels,
@@ -196,6 +426,7 @@ class MonthlyReportController extends Controller
                 'subDeptAvgProgress' => $chartSubDeptAvgProgress,
                 'subDeptTotalWeight' => $chartSubDeptTotalWeight,
                 'subDeptProjectCount' => $chartSubDeptProjectCount,
+                'ytd' => $ytdData,
             ],
             'chartProjectLabels' => $chartProjectLabels,
             'chartProjectPlans' => $chartProjectPlans,

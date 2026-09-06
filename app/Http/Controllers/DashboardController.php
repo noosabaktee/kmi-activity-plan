@@ -78,6 +78,8 @@ class DashboardController extends Controller
         $totalWeight = $projects->sum('floatWeight');
 
         $exposurePayload = ExposureCurveBuilder::payload($projects);
+        $monthlyReportData = MonthlyReportController::getMonthlyReportData();
+        $ytdData = $monthlyReportData['ytdData'] ?? null;
 
         return view('dashboard.index', compact(
             'authUser',
@@ -91,7 +93,8 @@ class DashboardController extends Controller
             'avgActual',
             'avgScore',
             'totalWeight',
-            'exposurePayload'
+            'exposurePayload',
+            'ytdData'
         ));
     }
 }
