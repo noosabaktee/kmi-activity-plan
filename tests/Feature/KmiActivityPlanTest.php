@@ -10,8 +10,11 @@ use App\Models\MWeeklyPlan;
 use App\Models\TrDailyPlanActivity;
 use App\Models\TrDailyTask;
 use App\Models\TrProjectAssignment;
+use App\Models\TrProjectStage;
 use App\Models\TrSubProject;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 
 uses(RefreshDatabase::class);
 
@@ -357,7 +360,7 @@ test('it calculates exposure curve points for API and dashboard', function () {
     ]);
 });
 
-test('it renders daily task spreadsheet page', function () {
+test('it renders daily task spreadsheet page and scopes project types to existing employee projects', function () {
     $user = MUser::where('txtRole', 'Employee')->first();
 
     $response = $this->withSession(['auth_user_id' => $user->intUser_ID])
@@ -366,6 +369,13 @@ test('it renders daily task spreadsheet page', function () {
     $response->assertStatus(200);
     $response->assertSee('DAILY TASK SPREADSHEET');
     $response->assertSee('hotTableContainer');
+
+    $viewProjectTypes = $response->viewData('projectTypes');
+    $userProjects = MProject::where('bitActive', true)->forUser($user->intUser_ID)->get();
+    $expectedTypeIds = $userProjects->pluck('intProjectType_ID')->filter()->unique()->values()->all();
+
+    expect($viewProjectTypes->pluck('intProjectType_ID')->sort()->values()->all())
+        ->toBe(collect($expectedTypeIds)->sort()->values()->all());
 });
 
 test('it handles daily task spreadsheet batch save and excel export', function () {
@@ -402,6 +412,159 @@ test('it handles daily task spreadsheet batch save and excel export', function (
         ->get(route('reports.daily-tasks.export-excel'));
 
     $exportResponse->assertStatus(200);
+});
+
+test('it saves daily task with project type and stage, and filters by project type and sub project', function () {
+    $user = MUser::where('txtRole', 'Employee')->first();
+    $project = MProject::where('bitActive', true)->first();
+    $projectType = MProjectType::find($project->intProjectType_ID);
+    $stage = TrProjectStage::where('intProject_ID', $project->intProject_ID)->first();
+    $subProject = TrSubProject::where('intProject_ID', $project->intProject_ID)->first();
+
+    $response = $this->withSession(['auth_user_id' => $user->intUser_ID])
+        ->postJson(route('reports.daily-tasks.batch-save'), [
+            'rows' => [
+                [
+                    'date' => '2026-09-02',
+                    'employeeId' => $user->intUser_ID,
+                    'projectTypeId' => $projectType?->intProjectType_ID,
+                    'projectId' => $project->intProject_ID,
+                    'subProjectId' => $subProject?->intSubProject_ID,
+                    'stageId' => $stage?->intProjectStage_ID,
+                    'activity' => 'Testing Enhanced Daily Task with Stage',
+                    'deliverable' => 'Output Verified',
+                    'duration' => 4.0,
+                    'progress' => 80,
+                    'status' => 'In Progress',
+                    'notes' => 'Testing stage and project type',
+                ],
+            ],
+        ]);
+
+    $response->assertStatus(200);
+    $response->assertJson(['success' => true]);
+
+    $this->assertDatabaseHas('trDailyTask', [
+        'txtActivityDescription' => 'Testing Enhanced Daily Task with Stage',
+        'intProjectType_ID' => $projectType?->intProjectType_ID,
+        'intProjectStage_ID' => $stage?->intProjectStage_ID,
+    ]);
+
+    // Test filtering by project_type
+    $filterTypeResponse = $this->withSession(['auth_user_id' => $user->intUser_ID])
+        ->get(route('reports.daily-tasks', ['project_type' => $projectType->intProjectType_ID]));
+    $filterTypeResponse->assertStatus(200);
+    $filterTypeResponse->assertSee('Testing Enhanced Daily Task with Stage');
+
+    // Test filtering by sub_project if exists
+    if ($subProject) {
+        $filterSubResponse = $this->withSession(['auth_user_id' => $user->intUser_ID])
+            ->get(route('reports.daily-tasks', ['sub_project' => $subProject->intSubProject_ID]));
+        $filterSubResponse->assertStatus(200);
+        $filterSubResponse->assertSee('Testing Enhanced Daily Task with Stage');
+    }
+
+    // Test Excel export with new filters
+    $exportResponse = $this->withSession(['auth_user_id' => $user->intUser_ID])
+        ->get(route('reports.daily-tasks.export-excel', [
+            'project_type' => $projectType->intProjectType_ID,
+        ]));
+    $exportResponse->assertStatus(200);
+});
+
+test('it uploads, views, and deletes attachments (image, pdf, video) for daily task', function () {
+    Storage::fake('public');
+
+    $user = MUser::where('txtRole', 'Employee')->first();
+    $task = TrDailyTask::create([
+        'intUser_ID' => $user->intUser_ID,
+        'dtmTaskDate' => '2026-09-02',
+        'txtActivityDescription' => 'Task for attachment testing',
+        'floatDurationHours' => 2,
+        'floatProgressPercent' => 100,
+        'txtTaskStatus' => 'Completed',
+        'txtInsertedBy' => $user->txtEmployeeName,
+    ]);
+
+    // 1. Upload Image
+    $imageFile = UploadedFile::fake()->image('activity_screenshot.png');
+    $uploadImgResponse = $this->withSession(['auth_user_id' => $user->intUser_ID])
+        ->postJson(route('reports.daily-tasks.attachment.upload', $task->intDailyTask_ID), [
+            'attachment' => $imageFile,
+        ]);
+
+    $uploadImgResponse->assertStatus(200);
+    $uploadImgResponse->assertJson([
+        'success' => true,
+        'attachment' => [
+            'name' => 'activity_screenshot.png',
+            'type' => 'image',
+        ],
+    ]);
+
+    $task->refresh();
+    $this->assertEquals('image', $task->txtAttachmentType);
+    $this->assertEquals('activity_screenshot.png', $task->txtAttachmentName);
+    Storage::disk('public')->assertExists($task->txtAttachmentPath);
+
+    // 2. View Image
+    $viewImgResponse = $this->withSession(['auth_user_id' => $user->intUser_ID])
+        ->get(route('reports.daily-tasks.attachment.view', $task->intDailyTask_ID));
+    $viewImgResponse->assertStatus(200);
+    $viewImgResponse->assertHeader('Content-Disposition', 'inline; filename="activity_screenshot.png"');
+
+    // 3. Upload PDF (replaces previous attachment)
+    $oldPath = $task->txtAttachmentPath;
+    $pdfFile = UploadedFile::fake()->create('report_document.pdf', 100, 'application/pdf');
+    $uploadPdfResponse = $this->withSession(['auth_user_id' => $user->intUser_ID])
+        ->postJson(route('reports.daily-tasks.attachment.upload', $task->intDailyTask_ID), [
+            'attachment' => $pdfFile,
+        ]);
+
+    $uploadPdfResponse->assertStatus(200);
+    $uploadPdfResponse->assertJson([
+        'success' => true,
+        'attachment' => [
+            'name' => 'report_document.pdf',
+            'type' => 'pdf',
+        ],
+    ]);
+
+    $task->refresh();
+    $this->assertEquals('pdf', $task->txtAttachmentType);
+    Storage::disk('public')->assertMissing($oldPath);
+    Storage::disk('public')->assertExists($task->txtAttachmentPath);
+
+    // 4. Upload Video
+    $videoFile = UploadedFile::fake()->create('demo_recording.mp4', 500, 'video/mp4');
+    $uploadVideoResponse = $this->withSession(['auth_user_id' => $user->intUser_ID])
+        ->postJson(route('reports.daily-tasks.attachment.upload', $task->intDailyTask_ID), [
+            'attachment' => $videoFile,
+        ]);
+
+    $uploadVideoResponse->assertStatus(200);
+    $uploadVideoResponse->assertJson([
+        'success' => true,
+        'attachment' => [
+            'name' => 'demo_recording.mp4',
+            'type' => 'video',
+        ],
+    ]);
+
+    $task->refresh();
+    $this->assertEquals('video', $task->txtAttachmentType);
+
+    // 5. Delete Attachment
+    $deleteResponse = $this->withSession(['auth_user_id' => $user->intUser_ID])
+        ->deleteJson(route('reports.daily-tasks.attachment.delete', $task->intDailyTask_ID));
+
+    $deleteResponse->assertStatus(200);
+    $deleteResponse->assertJson(['success' => true]);
+
+    $task->refresh();
+    $this->assertNull($task->txtAttachmentPath);
+    $this->assertNull($task->txtAttachmentName);
+    $this->assertNull($task->txtAttachmentType);
 });
 
 test('it manages weekly plan cards and daily activities from monday to friday', function () {

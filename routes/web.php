@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::pattern('project', '[0-9]+');
 Route::pattern('dailyPlan', '[0-9]+');
+Route::pattern('dailyTask', '[0-9]+');
 Route::pattern('activity', '[0-9]+');
 Route::pattern('schedule', '[0-9]+');
 Route::pattern('user', '[0-9]+');
@@ -43,6 +44,9 @@ Route::middleware('kmi.auth')->group(function () {
         Route::get('daily-tasks', [DailyTaskController::class, 'index'])->name('daily-tasks');
         Route::post('daily-tasks/batch-save', [DailyTaskController::class, 'batchSave'])->name('daily-tasks.batch-save');
         Route::get('daily-tasks/export-excel', [DailyTaskController::class, 'exportExcel'])->name('daily-tasks.export-excel');
+        Route::post('daily-tasks/{dailyTask}/attachment', [DailyTaskController::class, 'uploadAttachment'])->name('daily-tasks.attachment.upload');
+        Route::get('daily-tasks/{dailyTask}/attachment', [DailyTaskController::class, 'viewAttachment'])->name('daily-tasks.attachment.view');
+        Route::delete('daily-tasks/{dailyTask}/attachment', [DailyTaskController::class, 'deleteAttachment'])->name('daily-tasks.attachment.delete');
 
         // Daily Plan (Weekly Format & Mon-Fri Activity Planner)
         Route::get('daily-plans', [DailyPlanController::class, 'index'])->name('daily-plans');

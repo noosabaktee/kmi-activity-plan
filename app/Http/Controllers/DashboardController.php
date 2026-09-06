@@ -58,7 +58,7 @@ class DashboardController extends Controller
             }])
             ->get();
 
-        $recentTasks = TrDailyTask::with(['user', 'project', 'subProject'])
+        $recentTasks = TrDailyTask::with(['user', 'project.projectType', 'projectType', 'subProject', 'stage'])
             ->where('intDepartment_ID', $departmentId)
             ->orderByDesc('dtmTaskDate')
             ->take(8)

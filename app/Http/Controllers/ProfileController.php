@@ -54,7 +54,7 @@ class ProfileController extends Controller
         $exposurePayload = ExposureCurveBuilder::payload($projects);
 
         // 3. Daily Tasks statistics & recent tasks
-        $dailyTasksQuery = TrDailyTask::with(['project', 'subProject'])
+        $dailyTasksQuery = TrDailyTask::with(['project.projectType', 'projectType', 'subProject', 'stage'])
             ->where('intUser_ID', $user->intUser_ID);
 
         $totalDailyTasks = (clone $dailyTasksQuery)->count();

@@ -30,6 +30,7 @@ Route::prefix('v1')->group(function () {
 
     Route::get('daily-tasks', function (Request $request) {
         $query = TrDailyTask::with(['user', 'project', 'subProject'])->orderBy('dtmTaskDate', 'desc');
+        $query = TrDailyTask::with(['user', 'project.projectType', 'projectType', 'subProject', 'stage'])->orderBy('dtmTaskDate', 'desc');
         if ($request->filled('employee_id')) {
             $query->where('intUser_ID', $request->employee_id);
         }

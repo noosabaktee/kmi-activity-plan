@@ -487,3 +487,29 @@
     border: none;
     cursor: pointer;
 }
+
+/* Modals over Handsontable Header Overlays */
+#attachmentViewModal,
+#attachmentUploadModal {
+    z-index: 99999 !important;
+}
+
+/* Handsontable Attachment Column Vertical Centering */
+.handsontable td.ht-attachment-cell,
+.handsontable td.ht-attachment-cell.htMiddle {
+    padding: 0 4px !important;
+    vertical-align: middle !important;
+    text-align: center !important;
+    line-height: 1 !important;
+}
+
+.handsontable td.ht-attachment-cell>div {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100% !important;
+    height: 38px !important;
+    min-height: 38px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
