@@ -21,17 +21,12 @@
     <!-- Ad Hoc Guide Notice Banner -->
     <div class="p-4 rounded-3xl bg-teal-50/70 border border-teal-200 text-teal-950 flex items-start gap-3.5">
         <div class="w-9 h-9 rounded-xl bg-teal-700 text-white flex items-center justify-center text-base shrink-0 shadow-2xs mt-0.5">
-    <div class="p-4 rounded-3xl bg-emerald-50/80 border border-emerald-200 text-emerald-950 flex items-start gap-3.5">
-        <div class="w-9 h-9 rounded-xl bg-[#006838] text-white flex items-center justify-center text-base shrink-0 shadow-2xs mt-0.5">
             <i class="fa-solid fa-bolt"></i>
         </div>
         <div class="space-y-0.5">
             <h4 class="text-xs font-black uppercase tracking-wider text-teal-900 m-0">Karakteristik Kegiatan Ad Hoc</h4>
             <p class="text-xs text-teal-800 m-0 leading-relaxed">
                 Inisiatif Ad Hoc dibentuk, direncanakan, atau dilaksanakan secara <strong>khusus untuk menangani satu sasaran atau situasi mendesak/tertentu yang sifatnya sementara</strong>. Formulir ini dioptimalkan untuk respons cepat, action plan terarah, dan penugasan tim lintas fungsi.
-            <h4 class="text-xs font-black uppercase tracking-wider text-emerald-900 m-0">Alur Pengajuan & Persetujuan (ACC) Ad Hoc</h4>
-            <p class="text-xs text-emerald-800 m-0 leading-relaxed">
-                Inisiatif Ad Hoc diajukan secara khusus untuk menangani situasi sementara atau sasaran tertentu. Setiap inisiatif baru yang diajukan akan <strong>dikirimkan ke Supervisor terkait untuk di-ACC</strong>. Sistem otomatis mengirimkan <strong>notifikasi pesan WhatsApp</strong> ke nomor supervisor yang ditugaskan.
             </p>
         </div>
     </div>
@@ -157,32 +152,30 @@
                     </select>
                 </div>
 
-                <input type="hidden" name="intUser_ID" id="mainIntUserId" value="{{ old('intUser_ID', $authUser->intUser_ID) }}">
-                <div class="md:col-span-2 p-4 rounded-2xl bg-emerald-50/70 border border-emerald-200">
-                    <div class="flex items-start gap-3">
-                        <div class="w-8 h-8 rounded-xl bg-[#006838] text-white flex items-center justify-center text-sm shrink-0 shadow-2xs mt-0.5">
-                            <i class="fa-brands fa-whatsapp text-white"></i>
-                        </div>
-                        <div class="flex-1 space-y-1">
-                            <label class="block text-xs font-bold text-gray-800 uppercase tracking-wider">
-                                Supervisor Penyetuju (ACC Ad Hoc) <span class="text-red-500">*</span>
-                            </label>
-                            <p class="text-[11px] text-gray-600 m-0 leading-relaxed">
-                                Pengajuan Ad Hoc ini akan dikirimkan ke Supervisor terpilih untuk ditinjau dan di-ACC. Sistem akan otomatis mengirimkan <strong>notifikasi pesan WhatsApp</strong> ke nomor supervisor bersangkutan.
-                            </p>
-                            <div class="pt-2">
-                                <select name="intSupervisor_ID" id="supervisorSelect" class="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-sm focus:border-[#006838] focus:ring-2 focus:ring-[#006838]/20 outline-none bg-white">
-                                    <option value="">-- Pilih Supervisor Penyetuju (Otomatis berdasarkan Sub Dept jika dikosongkan) --</option>
-                                    @foreach ($supervisors as $spv)
-                                    <option value="{{ $spv->intUser_ID }}" {{ old('intSupervisor_ID') == $spv->intUser_ID ? 'selected' : '' }}>
-                                        {{ $spv->txtEmployeeName }} ({{ $spv->txtPosition ?? $spv->txtRole }}) {{ $spv->txtPhone ? '• WA: ' . $spv->txtPhone : '• WA: Belum terdaftar' }}
-                                    </option>
-                                    @endforeach
-                                </select>
-                            </div>
-                        </div>
+                <div class="md:col-span-2 p-4 rounded-2xl bg-amber-50/70 border border-amber-200 space-y-2">
+                    <div class="flex items-center justify-between">
+                        <label class="block text-xs font-bold text-amber-900 uppercase tracking-wider">
+                            <i class="fa-solid fa-user-check text-amber-600 mr-1"></i>
+                            Supervisor yang Ditugaskan untuk ACC (Approval) <span class="text-red-500">*</span>
+                        </label>
+                        <span class="text-[10px] text-emerald-800 bg-emerald-100 px-2.5 py-0.5 rounded-full font-bold flex items-center gap-1 border border-emerald-200">
+                            <i class="fa-brands fa-whatsapp text-emerald-600"></i>Notifikasi WA Otomatis
+                        </span>
                     </div>
+                    <select name="intSupervisor_ID" class="w-full px-3.5 py-2.5 rounded-xl border border-amber-300 text-sm focus:border-[#006838] focus:ring-2 focus:ring-[#006838]/20 outline-none bg-white font-medium">
+                        <option value="">-- Otomatis Tentukan Supervisor Berdasarkan Sub-Departemen --</option>
+                        @foreach ($supervisors as $spv)
+                        <option value="{{ $spv->intUser_ID }}" {{ old('intSupervisor_ID') == $spv->intUser_ID ? 'selected' : '' }}>
+                            {{ $spv->txtEmployeeName }} ({{ $spv->txtRole }} &bull; {{ $spv->subDepartment?->txtSubDepartmentCode ?? 'Dept' }}) {{ !empty($spv->txtPhone) ? '📱 ' . $spv->txtPhone : '⚠️ Belum ada no WA' }}
+                        </option>
+                        @endforeach
+                    </select>
+                    <p class="text-[11px] text-amber-800 m-0">
+                        Inisiatif Ad Hoc akan diajukan ke Supervisor ini untuk di-ACC terlebih dahulu. Sistem otomatis mengirim pesan WhatsApp berisi rincian inisiatif ke nomor supervisor terkait.
+                    </p>
                 </div>
+
+                <input type="hidden" name="intUser_ID" id="mainIntUserId" value="{{ old('intUser_ID', $authUser->intUser_ID) }}">
 
                 <div class="md:col-span-2">
                     <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
@@ -253,10 +246,6 @@
                     <i class="fa-solid fa-plus text-[#006838]"></i>
                     <span>Tambah Langkah Aksi</span>
                 </button>
-                    <button type="button" onclick="addActionStepRow()" class="px-3.5 py-1.5 rounded-xl bg-emerald-50 text-[#006838] hover:bg-emerald-100 border border-emerald-300 font-bold text-xs transition flex items-center gap-1.5 cursor-pointer shadow-2xs" style="background-color: #ecfdf5; color: #006838; border-color: #a7f3d0;">
-                        <i class="fa-solid fa-plus text-[#006838]"></i>
-                        <span>Tambah Langkah Aksi</span>
-                    </button>
             </div>
 
             <div class="overflow-x-auto">
@@ -336,13 +325,6 @@ $employeesJson = $employees->map(function ($e) {
         'role' => $e->txtRole,
         'subdept' => $e->subDepartment?->txtSubDepartmentCode ?? 'MDP',
     ];
-return [
-'id' => (int) $e->intUser_ID,
-'name' => $e->txtEmployeeName,
-'code' => $e->txtEmployeeCode ?? '',
-'role' => $e->txtRole,
-'subdept' => $e->subDepartment?->txtSubDepartmentCode ?? 'MDP',
-];
 })->values()->all();
 @endphp
 
@@ -406,10 +388,6 @@ return [
         tr.className = 'action-row';
         const startVal = document.getElementById('startDateInput').value || '{{ date('Y-m-d') }}';
         const endVal = document.getElementById('endDateInput').value || '{{ date('Y-m-d') }}';
-        const startVal = document.getElementById('startDateInput').value || '{{ date('
-        Y - m - d ') }}';
-        const endVal = document.getElementById('endDateInput').value || '{{ date('
-        Y - m - d ') }}';
 
         tr.innerHTML = `
             <td class="p-2"><input type="text" name="stages[${stepIndex}][step]" placeholder="Langkah tindakan..." class="w-full px-2.5 py-1.5 rounded-lg border border-gray-300 text-xs"></td>

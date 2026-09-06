@@ -272,4 +272,3 @@ class MProject extends Model
         return $query->where('txtApprovalStatus', 'Pending Approval');
     }
 }
-

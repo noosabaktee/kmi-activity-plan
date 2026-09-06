@@ -23,14 +23,6 @@
                 <i class="fa-solid fa-arrow-left"></i>
                 <span>Kembali</span>
             </a>
-                <a href="{{ route('adhocs.show', $adhoc) }}" class="px-3.5 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-[#006838] border border-emerald-300 font-semibold text-xs transition flex items-center gap-1.5 no-underline shadow-2xs" style="background-color: #ecfdf5; color: #006838; border-color: #a7f3d0;">
-                    <i class="fa-solid fa-eye text-[#006838]"></i>
-                    <span>Lihat Detail</span>
-                </a>
-                <a href="{{ route('adhocs.index') }}" class="px-3.5 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold text-xs transition flex items-center gap-1.5 no-underline">
-                    <i class="fa-solid fa-arrow-left"></i>
-                    <span>Kembali</span>
-                </a>
         </div>
     </div>
 
@@ -75,7 +67,6 @@
                     <div class="grid grid-cols-4 gap-2">
                         @php
                             $currentPriority = old('txtPriority', $adhoc->txtPriority ?: 'Medium');
-                        $currentPriority = old('txtPriority', $adhoc->txtPriority ?: 'Medium');
                         @endphp
                         @foreach (['Critical' => ['label' => 'Critical', 'icon' => 'fa-fire', 'active' => 'border-red-500 bg-red-50 text-red-700'], 'High' => ['label' => 'High', 'icon' => 'fa-triangle-exclamation', 'active' => 'border-orange-500 bg-orange-50 text-orange-700'], 'Medium' => ['label' => 'Medium', 'icon' => 'fa-circle-check', 'active' => 'border-blue-500 bg-blue-50 text-blue-700'], 'Low' => ['label' => 'Low', 'icon' => 'fa-circle-info', 'active' => 'border-gray-500 bg-gray-50 text-gray-700']] as $key => $u)
                         <label class="border-2 rounded-xl p-2 text-center cursor-pointer transition flex flex-col items-center justify-center gap-1 {{ $currentPriority == $key ? $u['active'] . ' font-black' : 'border-gray-200 text-gray-600 hover:border-teal-600' }}">
@@ -157,38 +148,33 @@
                     </select>
                 </div>
 
-                <input type="hidden" name="intUser_ID" id="mainIntUserId" value="{{ old('intUser_ID', $adhoc->intUser_ID) }}">
-                <div class="md:col-span-2 p-4 rounded-2xl bg-emerald-50/70 border border-emerald-200">
-                    <div class="flex items-start gap-3">
-                        <div class="w-8 h-8 rounded-xl bg-[#006838] text-white flex items-center justify-center text-sm shrink-0 shadow-2xs mt-0.5">
-                            <i class="fa-brands fa-whatsapp text-white"></i>
-                        </div>
-                        <div class="flex-1 space-y-1">
-                            <label class="block text-xs font-bold text-gray-800 uppercase tracking-wider">
-                                Supervisor Penyetuju (ACC Ad Hoc)
-                            </label>
-                            <p class="text-[11px] text-gray-600 m-0 leading-relaxed">
-                                Status Approval saat ini:
-                                <strong class="font-bold {{ $adhoc->isPendingApproval() ? 'text-amber-700' : ($adhoc->isApproved() ? 'text-emerald-700' : 'text-rose-700') }}">
-                                    {{ $adhoc->txtApprovalStatus ?: 'Approved' }}
-                                </strong>
-                                @if ($adhoc->txtApprovalNotes)
-                                &bull; Catatan Review: <em>"{{ $adhoc->txtApprovalNotes }}"</em>
-                                @endif
-                            </p>
-                            <div class="pt-2">
-                                <select name="intSupervisor_ID" class="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-sm focus:border-[#006838] focus:ring-2 focus:ring-[#006838]/20 outline-none bg-white">
-                                    <option value="">-- Pilih Supervisor Penyetuju --</option>
-                                    @foreach ($supervisors as $spv)
-                                    <option value="{{ $spv->intUser_ID }}" {{ old('intSupervisor_ID', $adhoc->intSupervisor_ID) == $spv->intUser_ID ? 'selected' : '' }}>
-                                        {{ $spv->txtEmployeeName }} ({{ $spv->txtPosition ?? $spv->txtRole }}) {{ $spv->txtPhone ? '• WA: ' . $spv->txtPhone : '• WA: Belum terdaftar' }}
-                                    </option>
-                                    @endforeach
-                                </select>
-                            </div>
-                        </div>
+                <div class="md:col-span-2 p-4 rounded-2xl bg-amber-50/70 border border-amber-200 space-y-2">
+                    <div class="flex items-center justify-between">
+                        <label class="block text-xs font-bold text-amber-900 uppercase tracking-wider">
+                            <i class="fa-solid fa-user-check text-amber-600 mr-1"></i>
+                            Supervisor Penanggung Jawab ACC / Approval
+                        </label>
+                        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full {{ $adhoc->isPendingApproval() ? 'bg-amber-200 text-amber-900' : ($adhoc->isApproved() ? 'bg-emerald-200 text-emerald-900' : 'bg-rose-200 text-rose-900') }}">
+                            Status Saat Ini: {{ $adhoc->txtApprovalStatus ?: 'Approved' }}
+                        </span>
                     </div>
+                    <select name="intSupervisor_ID" class="w-full px-3.5 py-2.5 rounded-xl border border-amber-300 text-sm focus:border-[#006838] focus:ring-2 focus:ring-[#006838]/20 outline-none bg-white font-medium">
+                        <option value="">-- Otomatis Pilih Supervisor Berdasarkan Sub-Departemen --</option>
+                        @foreach ($supervisors as $spv)
+                        <option value="{{ $spv->intUser_ID }}" {{ old('intSupervisor_ID', $adhoc->intSupervisor_ID) == $spv->intUser_ID ? 'selected' : '' }}>
+                            {{ $spv->txtEmployeeName }} ({{ $spv->txtRole }} &bull; {{ $spv->subDepartment?->txtSubDepartmentCode ?? 'Dept' }}) {{ !empty($spv->txtPhone) ? '📱 ' . $spv->txtPhone : '⚠️ Belum ada no WA' }}
+                        </option>
+                        @endforeach
+                    </select>
+                    @if ($adhoc->txtApprovalNotes)
+                    <div class="p-2.5 rounded-xl bg-white border border-amber-200 text-xs text-amber-950 mt-1">
+                        <span class="font-bold block text-[10px] uppercase text-amber-800">Catatan / Alasan Review Supervisor:</span>
+                        <em>"{{ $adhoc->txtApprovalNotes }}"</em>
+                    </div>
+                    @endif
                 </div>
+
+                <input type="hidden" name="intUser_ID" id="mainIntUserId" value="{{ old('intUser_ID', $adhoc->intUser_ID) }}">
 
                 <div class="md:col-span-2">
                     <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
@@ -254,10 +240,6 @@
                     <i class="fa-solid fa-plus"></i>
                     <span>Tambah Langkah Aksi</span>
                 </button>
-                    <button type="button" onclick="addActionStepRow()" class="px-3 py-1.5 rounded-xl bg-emerald-50 text-[#006838] border border-emerald-300 hover:bg-emerald-100 font-bold text-xs transition flex items-center gap-1.5 cursor-pointer" style="background-color: #ecfdf5; color: #006838; border: 1px solid #6ee7b7;">
-                        <i class="fa-solid fa-plus"></i>
-                        <span>Tambah Langkah Aksi</span>
-                    </button>
             </div>
 
             <div class="overflow-x-auto">
@@ -316,7 +298,6 @@
 $assignedIds = $adhoc->assignments->pluck('intUser_ID')->unique()->values()->all();
 if (empty($assignedIds) && $adhoc->intUser_ID) {
     $assignedIds = [$adhoc->intUser_ID];
-$assignedIds = [$adhoc->intUser_ID];
 }
 $employeesJson = $employees->map(function ($e) {
     return [
@@ -326,13 +307,6 @@ $employeesJson = $employees->map(function ($e) {
         'role' => $e->txtRole,
         'subdept' => $e->subDepartment?->txtSubDepartmentCode ?? 'MDP',
     ];
-return [
-'id' => (int) $e->intUser_ID,
-'name' => $e->txtEmployeeName,
-'code' => $e->txtEmployeeCode ?? '',
-'role' => $e->txtRole,
-'subdept' => $e->subDepartment?->txtSubDepartmentCode ?? 'MDP',
-];
 })->values()->all();
 @endphp
 
@@ -341,11 +315,6 @@ return [
     const allEmployees = @json($employeesJson);
     const existingAssignedIds = @json($assignedIds);
     let stepIndex = {{ max(count($adhoc->directStages), 1) }};
-    let stepIndex = {
-        {
-            max(count($adhoc - > directStages), 1)
-        }
-    };
 
     function escapeHtml(text) {
         if (!text) return '';
@@ -401,10 +370,6 @@ return [
         tr.className = 'action-row';
         const startVal = document.getElementById('startDateInput').value || '{{ date('Y-m-d') }}';
         const endVal = document.getElementById('endDateInput').value || '{{ date('Y-m-d') }}';
-        const startVal = document.getElementById('startDateInput').value || '{{ date('
-        Y - m - d ') }}';
-        const endVal = document.getElementById('endDateInput').value || '{{ date('
-        Y - m - d ') }}';
 
         tr.innerHTML = `
             <td class="p-2"><input type="text" name="stages[${stepIndex}][step]" placeholder="Langkah tindakan..." class="w-full px-2.5 py-1.5 rounded-lg border border-gray-300 text-xs"></td>

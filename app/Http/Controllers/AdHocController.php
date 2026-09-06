@@ -127,7 +127,6 @@ class AdHocController extends Controller
             ->orderBy('txtEmployeeName')
             ->get();
 
-        return view('adhocs.create', compact('skillsets', 'subDepartments', 'employees', 'authUser'));
         return view('adhocs.create', compact('skillsets', 'subDepartments', 'employees', 'supervisors', 'authUser'));
     }
 
@@ -169,7 +168,6 @@ class AdHocController extends Controller
         $firstAssigned = ! empty($validated['assignments'][0]) ? (int) $validated['assignments'][0] : null;
         $intUserId = ! empty($validated['intUser_ID']) ? (int) $validated['intUser_ID'] : ($firstAssigned ?: ($authUser?->intUser_ID ?: 1));
 
-        DB::transaction(function () use ($validated, $authUser, $now, $intUserId, $adHocTypeId) {
         // Detect or resolve designated supervisor
         $supervisorId = ! empty($validated['intSupervisor_ID']) ? (int) $validated['intSupervisor_ID'] : null;
         if (! $supervisorId && ! empty($validated['intSubDepartment_ID'])) {
@@ -274,7 +272,6 @@ class AdHocController extends Controller
             $createdProject = $project;
         });
 
-        return redirect()->route('adhocs.index')->with('success', 'Inisiatif Ad Hoc berhasil dibuat dan dijadwalkan!');
         // WhatsApp notification to supervisor if pending approval
         if ($createdProject && $createdProject->isPendingApproval() && $createdProject->intSupervisor_ID) {
             $supervisor = MUser::find($createdProject->intSupervisor_ID);
@@ -365,7 +362,6 @@ class AdHocController extends Controller
             ->orderBy('txtEmployeeName')
             ->get();
 
-        return view('adhocs.edit', compact('adhoc', 'skillsets', 'subDepartments', 'employees', 'authUser'));
         return view('adhocs.edit', compact('adhoc', 'skillsets', 'subDepartments', 'employees', 'supervisors', 'authUser'));
     }
 

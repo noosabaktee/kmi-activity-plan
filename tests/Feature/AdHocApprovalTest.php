@@ -274,4 +274,3 @@ test('ad hoc index displays approval filter and pending counter correctly', func
     $approvedResponse->assertSee('Inisiatif Ad Hoc Sudah ACC');
     $approvedResponse->assertDontSee('Inisiatif Ad Hoc Menunggu ACC');
 });
-
