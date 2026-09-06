@@ -60,6 +60,7 @@ Route::middleware('kmi.auth')->group(function () {
         Route::get('daily-plans/{dailyPlan}', [DailyPlanController::class, 'show'])->name('daily-plans.show');
         Route::delete('daily-plans/{dailyPlan}', [DailyPlanController::class, 'destroy'])->name('daily-plans.destroy');
         Route::post('daily-plans/{dailyPlan}/activities', [DailyPlanController::class, 'storeActivity'])->name('daily-plans.activities.store');
+        Route::put('daily-plans/activities/{activity}', [DailyPlanController::class, 'updateActivity'])->name('daily-plans.activities.update');
         Route::delete('daily-plans/activities/{activity}', [DailyPlanController::class, 'destroyActivity'])->name('daily-plans.activities.destroy');
 
         // Monthly Report Dashboard

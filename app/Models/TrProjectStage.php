@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Models\Concerns\GeneratesIntegerIds;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class TrProjectStage extends Model
 {
@@ -49,5 +50,10 @@ class TrProjectStage extends Model
     public function subProject(): BelongsTo
     {
         return $this->belongsTo(TrSubProject::class, 'intSubProject_ID', 'intSubProject_ID');
+    }
+
+    public function dailyPlanActivities(): HasMany
+    {
+        return $this->hasMany(TrDailyPlanActivity::class, 'intProjectStage_ID', 'intProjectStage_ID');
     }
 }

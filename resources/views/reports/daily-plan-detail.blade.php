@@ -83,9 +83,38 @@
                     <p class="font-bold text-gray-900 m-0 leading-tight">{{ $act->txtActivityName }}</p>
 
                     @if ($act->project)
-                    <div class="flex items-center gap-1.5 text-[10px] text-emerald-700 font-semibold bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200/60 w-fit">
-                        <i class="fa-solid fa-diagram-project text-[9px]"></i>
-                        <span class="truncate max-w-[160px]">{{ $act->project->txtProjectName }}</span>
+                    <div class="space-y-1">
+                        <div class="flex items-center gap-1.5 text-[10px] text-emerald-700 font-semibold bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200/60 w-fit max-w-full">
+                            <i class="fa-solid fa-diagram-project text-[9px] shrink-0"></i>
+                            <span class="truncate">{{ $act->project->txtProjectName }}</span>
+                        </div>
+                        @if ($act->subProject)
+                        <div class="flex items-center gap-1 text-[9.5px] text-teal-700 font-medium bg-teal-50 px-2 py-0.5 rounded-md border border-teal-200/60 w-fit max-w-full">
+                            <i class="fa-solid fa-folder-tree text-[8.5px] shrink-0"></i>
+                            <span class="truncate">{{ $act->subProject->txtSubProjectName }}</span>
+                        </div>
+                        @endif
+                        @if ($act->stage)
+                        <div class="flex items-center gap-1 text-[9.5px] text-blue-700 font-medium bg-blue-50 px-2 py-0.5 rounded-md border border-blue-200/60 w-fit max-w-full">
+                            <i class="fa-solid fa-list-check text-[8.5px] shrink-0"></i>
+                            <span class="truncate">Stage: {{ $act->stage->txtProjectStageStep }}</span>
+                        </div>
+                        @endif
+                    </div>
+                    @elseif ($act->subProject || $act->stage)
+                    <div class="space-y-1">
+                        @if ($act->subProject)
+                        <div class="flex items-center gap-1 text-[9.5px] text-teal-700 font-medium bg-teal-50 px-2 py-0.5 rounded-md border border-teal-200/60 w-fit max-w-full">
+                            <i class="fa-solid fa-folder-tree text-[8.5px] shrink-0"></i>
+                            <span class="truncate">{{ $act->subProject->txtSubProjectName }}</span>
+                        </div>
+                        @endif
+                        @if ($act->stage)
+                        <div class="flex items-center gap-1 text-[9.5px] text-blue-700 font-medium bg-blue-50 px-2 py-0.5 rounded-md border border-blue-200/60 w-fit max-w-full">
+                            <i class="fa-solid fa-list-check text-[8.5px] shrink-0"></i>
+                            <span class="truncate">Stage: {{ $act->stage->txtProjectStageStep }}</span>
+                        </div>
+                        @endif
                     </div>
                     @endif
 
@@ -98,13 +127,31 @@
                         <span>-</span>
                         @endif
 
-                        <form action="{{ route('reports.daily-plans.activities.destroy', $act) }}" method="POST" onsubmit="return confirm('Hapus aktivitas ini?')">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" class="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition p-1" title="Hapus">
-                                <i class="fa-solid fa-trash text-[10px]"></i>
+                        <div class="flex items-center gap-1">
+                            <button type="button" onclick="openEditActivityModal({{ json_encode([
+                                'id' => $act->intDailyPlanActivity_ID,
+                                'day' => $act->txtDayName,
+                                'date' => $act->dtmActivityDate?->format('Y-m-d'),
+                                'name' => $act->txtActivityName,
+                                'startTime' => $act->txtStartTime,
+                                'endTime' => $act->txtEndTime,
+                                'duration' => $act->floatDuration,
+                                'location' => $act->txtLocationType,
+                                'projectId' => $act->intProject_ID,
+                                'subProjectId' => $act->intSubProject_ID,
+                                'stageId' => $act->intProjectStage_ID,
+                                'remarks' => $act->txtRemarks,
+                            ]) }})" class="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-emerald-600 transition p-1 cursor-pointer" title="Edit">
+                                <i class="fa-solid fa-pen-to-square text-[10px]"></i>
                             </button>
-                        </form>
+                            <form action="{{ route('reports.daily-plans.activities.destroy', $act) }}" method="POST" onsubmit="return confirm('Hapus aktivitas ini?')">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition p-1 cursor-pointer" title="Hapus">
+                                    <i class="fa-solid fa-trash text-[10px]"></i>
+                                </button>
+                            </form>
+                        </div>
                     </div>
                 </div>
                 @empty
@@ -129,7 +176,7 @@
 
 </div>
 
-<!-- Modal Add Activity -->
+<!-- Modal Add / Edit Activity -->
 <div class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 hidden" id="activityModal">
     <div class="bg-white rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-2xl border border-gray-100 animate-scale-in">
         <div class="flex items-center justify-between pb-3 border-b border-gray-100">
@@ -137,19 +184,20 @@
                 <i class="fa-solid fa-calendar-plus text-[#006838]"></i>
                 <span id="modalDayTitle">Tambah Aktivitas</span>
             </h3>
-            <button type="button" onclick="closeActivityModal()" class="text-gray-400 hover:text-gray-600 p-1">
+            <button type="button" onclick="closeActivityModal()" class="text-gray-400 hover:text-gray-600 p-1 cursor-pointer">
                 <i class="fa-solid fa-xmark text-lg"></i>
             </button>
         </div>
 
         <form action="{{ route('reports.daily-plans.activities.store', $dailyPlan) }}" method="POST" class="space-y-4" id="activityForm">
             @csrf
+            <input type="hidden" name="_method" id="formMethod" value="POST">
             <input type="hidden" name="txtDayName" id="inputDayName">
             <input type="hidden" name="dtmActivityDate" id="inputActivityDate">
 
             <div>
                 <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Nama Aktivitas / Kegiatan <span class="text-red-500">*</span></label>
-                <input type="text" name="txtActivityName" required
+                <input type="text" name="txtActivityName" id="actActivityName" required
                     class="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-xs focus:border-[#006838] outline-none"
                     placeholder="Contoh: SENTUL Plant Ampere Check / Workshop I2MS / Training WD / Cuti">
             </div>
@@ -174,10 +222,10 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-2 gap-3">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                     <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Lokasi / Tagging</label>
-                    <input type="text" name="txtLocationType" list="locationOptions"
+                    <input type="text" name="txtLocationType" id="actLocationType" list="locationOptions"
                         class="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-xs focus:border-[#006838] outline-none"
                         placeholder="Contoh: SENTUL, Mekor, KMI, Cuti, Meeting">
                     <datalist id="locationOptions">
@@ -193,11 +241,13 @@
                 </div>
 
                 <div>
-                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Kaitkan Project (Opsional)</label>
-                    <select name="intProject_ID" class="w-full px-3 py-2.5 rounded-xl border border-gray-300 text-xs focus:border-[#006838] outline-none">
-                        <option value="">Tidak dikaitkan</option>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                        <i class="fa-solid fa-diagram-project text-[#006838] mr-1"></i> Project (Opsional)
+                    </label>
+                    <select name="intProject_ID" id="inputProjectId" onchange="handleProjectChange()"
+                        class="w-full px-3 py-2.5 rounded-xl border border-gray-300 text-xs focus:border-[#006838] outline-none">
+                        <option value="">-- Tidak dikaitkan ke Project --</option>
                         @foreach ($projects as $prj)
-                        <option value="{{ $prj->intProject_ID }}">{{ $prj->txtProjectName }}</option>
                         <option value="{{ $prj->intProject_ID }}">
                             {{ $prj->isAdHoc() ? '[Ad Hoc] ' : '' }}{{ $prj->txtProjectName }}
                         </option>
@@ -209,26 +259,198 @@
                 </div>
             </div>
 
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                        <i class="fa-solid fa-folder-tree text-teal-600 mr-1"></i> Sub Project (Opsional)
+                    </label>
+                    <select name="intSubProject_ID" id="inputSubProjectId" onchange="handleSubProjectChange()"
+                        class="w-full px-3 py-2.5 rounded-xl border border-gray-300 text-xs focus:border-[#006838] outline-none disabled:bg-gray-100 disabled:text-gray-400">
+                        <option value="">-- Pilih Project terlebih dahulu --</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                        <i class="fa-solid fa-list-check text-blue-600 mr-1"></i> Stage (Opsional)
+                    </label>
+                    <select name="intProjectStage_ID" id="inputProjectStageId"
+                        class="w-full px-3 py-2.5 rounded-xl border border-gray-300 text-xs focus:border-[#006838] outline-none disabled:bg-gray-100 disabled:text-gray-400">
+                        <option value="">-- Pilih Project terlebih dahulu --</option>
+                    </select>
+                </div>
+            </div>
+
             <div>
                 <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Catatan Tambahan (Opsional)</label>
-                <input type="text" name="txtRemarks"
+                <input type="text" name="txtRemarks" id="actRemarks"
                     class="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-xs focus:border-[#006838] outline-none"
                     placeholder="Catatan pengerjaan...">
             </div>
 
             <div class="flex items-center justify-end gap-2.5 pt-2">
-                <button type="button" onclick="closeActivityModal()" class="px-4 py-2 rounded-xl bg-gray-100 text-gray-700 font-semibold text-xs">Batal</button>
-                <button type="submit" class="px-5 py-2 rounded-xl bg-[#006838] hover:bg-[#004d29] text-white font-bold text-xs shadow-md transition">Simpan Aktivitas</button>
+                <button type="button" onclick="closeActivityModal()" class="px-4 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold text-xs transition cursor-pointer">Batal</button>
+                <button type="submit" class="px-5 py-2 rounded-xl bg-[#006838] hover:bg-[#004d29] text-white font-bold text-xs shadow-md transition flex items-center gap-1.5 cursor-pointer">
+                    <i class="fa-solid fa-floppy-disk text-xs"></i>
+                    <span id="submitBtnText">Simpan Aktivitas</span>
+                </button>
             </div>
         </form>
     </div>
 </div>
 
 <script>
+    const projectsData = @json($projectsLookup ?? []);
+    const defaultStoreUrl = "{{ route('reports.daily-plans.activities.store', $dailyPlan) }}";
+
+    function handleProjectChange(selectedSubProjectId = null, selectedStageId = null) {
+        const prjId = parseInt(document.getElementById('inputProjectId').value, 10);
+        const subPrjSelect = document.getElementById('inputSubProjectId');
+        const stageSelect = document.getElementById('inputProjectStageId');
+
+        subPrjSelect.innerHTML = '';
+        stageSelect.innerHTML = '';
+
+        if (!prjId) {
+            subPrjSelect.innerHTML = '<option value="">-- Pilih Project terlebih dahulu --</option>';
+            subPrjSelect.disabled = true;
+            stageSelect.innerHTML = '<option value="">-- Pilih Project terlebih dahulu --</option>';
+            stageSelect.disabled = true;
+            return;
+        }
+
+        const project = projectsData.find(p => p.id === prjId);
+        if (!project) {
+            subPrjSelect.innerHTML = '<option value="">-- Tidak ada Sub Project --</option>';
+            subPrjSelect.disabled = true;
+            stageSelect.innerHTML = '<option value="">-- Tidak ada Stage --</option>';
+            stageSelect.disabled = true;
+            return;
+        }
+
+        // Populate Sub Projects
+        if (project.subProjects && project.subProjects.length > 0) {
+            subPrjSelect.disabled = false;
+            const defaultOpt = document.createElement('option');
+            defaultOpt.value = '';
+            defaultOpt.textContent = '-- Pilih Sub Project (Opsional) --';
+            subPrjSelect.appendChild(defaultOpt);
+
+            project.subProjects.forEach(sp => {
+                const opt = document.createElement('option');
+                opt.value = sp.id;
+                opt.textContent = sp.name;
+                if (selectedSubProjectId && String(sp.id) === String(selectedSubProjectId)) {
+                    opt.selected = true;
+                }
+                subPrjSelect.appendChild(opt);
+            });
+        } else {
+            subPrjSelect.disabled = true;
+            const opt = document.createElement('option');
+            opt.value = '';
+            opt.textContent = '(Project tidak memiliki Sub Project)';
+            subPrjSelect.appendChild(opt);
+        }
+
+        // Trigger sub project change to populate stages
+        handleSubProjectChange(selectedStageId);
+    }
+
+    function handleSubProjectChange(selectedStageId = null) {
+        const prjId = parseInt(document.getElementById('inputProjectId').value, 10);
+        const subPrjId = parseInt(document.getElementById('inputSubProjectId').value, 10);
+        const stageSelect = document.getElementById('inputProjectStageId');
+
+        stageSelect.innerHTML = '';
+
+        if (!prjId) {
+            stageSelect.innerHTML = '<option value="">-- Pilih Project terlebih dahulu --</option>';
+            stageSelect.disabled = true;
+            return;
+        }
+
+        const project = projectsData.find(p => p.id === prjId);
+        if (!project) {
+            stageSelect.innerHTML = '<option value="">-- Tidak ada Stage --</option>';
+            stageSelect.disabled = true;
+            return;
+        }
+
+        let availableStages = [];
+
+        if (subPrjId) {
+            // If sub project is selected, load its stages
+            const subPrj = project.subProjects ? project.subProjects.find(sp => sp.id === subPrjId) : null;
+            if (subPrj && subPrj.stages && subPrj.stages.length > 0) {
+                availableStages = subPrj.stages;
+            }
+        } else {
+            // If no sub project selected, load direct stages of the project
+            if (project.directStages && project.directStages.length > 0) {
+                availableStages = project.directStages;
+            }
+        }
+
+        if (availableStages.length > 0) {
+            stageSelect.disabled = false;
+            const defaultOpt = document.createElement('option');
+            defaultOpt.value = '';
+            defaultOpt.textContent = '-- Pilih Stage (Opsional) --';
+            stageSelect.appendChild(defaultOpt);
+
+            availableStages.forEach(st => {
+                const opt = document.createElement('option');
+                opt.value = st.id;
+                opt.textContent = `Stage ${st.number ? st.number + ': ' : ''}${st.step}`;
+                if (selectedStageId && String(st.id) === String(selectedStageId)) {
+                    opt.selected = true;
+                }
+                stageSelect.appendChild(opt);
+            });
+        } else {
+            stageSelect.disabled = true;
+            const opt = document.createElement('option');
+            opt.value = '';
+            opt.textContent = subPrjId ? '(Sub Project ini tidak memiliki Stage)' : '(Project tidak memiliki Stage langsung)';
+            stageSelect.appendChild(opt);
+        }
+    }
+
     function openActivityModal(dayName, dateStr) {
+        document.getElementById('activityForm').reset();
+        document.getElementById('activityForm').action = defaultStoreUrl;
+        document.getElementById('formMethod').value = 'POST';
         document.getElementById('modalDayTitle').textContent = `Tambah Aktivitas: Hari ${dayName} (${dateStr})`;
+        document.getElementById('submitBtnText').textContent = 'Simpan Aktivitas';
         document.getElementById('inputDayName').value = dayName;
         document.getElementById('inputActivityDate').value = dateStr;
+        document.getElementById('actStartTime').value = '08:00';
+        document.getElementById('actEndTime').value = '10:00';
+        document.getElementById('actDuration').value = '2.0';
+        document.getElementById('actLocationType').value = '';
+        document.getElementById('actRemarks').value = '';
+        document.getElementById('inputProjectId').value = '';
+        handleProjectChange();
+        document.getElementById('activityModal').classList.remove('hidden');
+    }
+
+    function openEditActivityModal(act) {
+        document.getElementById('activityForm').reset();
+        document.getElementById('activityForm').action = `/reports/daily-plans/activities/${act.id}`;
+        document.getElementById('formMethod').value = 'PUT';
+        document.getElementById('modalDayTitle').textContent = `Edit Aktivitas: Hari ${act.day} (${act.date || ''})`;
+        document.getElementById('submitBtnText').textContent = 'Simpan Perubahan';
+        document.getElementById('inputDayName').value = act.day;
+        document.getElementById('inputActivityDate').value = act.date || '';
+        document.getElementById('actActivityName').value = act.name || '';
+        document.getElementById('actStartTime').value = act.startTime || '08:00';
+        document.getElementById('actEndTime').value = act.endTime || '10:00';
+        document.getElementById('actDuration').value = act.duration || 2.0;
+        document.getElementById('actLocationType').value = act.location || '';
+        document.getElementById('actRemarks').value = act.remarks || '';
+        document.getElementById('inputProjectId').value = act.projectId || '';
+        handleProjectChange(act.subProjectId, act.stageId);
         document.getElementById('activityModal').classList.remove('hidden');
     }
 
@@ -248,5 +470,10 @@
             document.getElementById('actDuration').value = (mins / 60).toFixed(1);
         }
     }
+
+    // Initialize dropdowns on page load if project already selected
+    document.addEventListener('DOMContentLoaded', function() {
+        handleProjectChange();
+    });
 </script>
 @endsection

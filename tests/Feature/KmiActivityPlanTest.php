@@ -660,6 +660,140 @@ test('it only displays projects belonging to the employee in daily plan activity
     $response->assertDontSee('Exclusive Project For Emp 2');
 });
 
+test('it allows adding and updating daily plan activity with optional sub project and stage', function () {
+    $user = MUser::where('txtRole', 'Employee')->first();
+    $type = MProjectType::first();
+
+    $project = MProject::create([
+        'intDepartment_ID' => 1,
+        'intSubDepartment_ID' => $user->intSubDepartment_ID ?: 1,
+        'intProjectType_ID' => $type->intProjectType_ID,
+        'intUser_ID' => $user->intUser_ID,
+        'txtProjectCode' => 'PRJ-OPT-TEST',
+        'txtProjectName' => 'Project For SubProject Stage Test',
+        'txtKpiLevel' => 'Individu',
+        'floatWeight' => 10,
+        'bitHasSubProject' => true,
+        'bitActive' => true,
+    ]);
+
+    $subProject = TrSubProject::create([
+        'intProject_ID' => $project->intProject_ID,
+        'txtSubProjectName' => 'Sub Project Alpha',
+        'floatWeight' => 5,
+        'floatProgress' => 0,
+        'txtStatus' => 'In Progress',
+        'txtInsertedBy' => $user->txtEmployeeName,
+    ]);
+
+    $stage = TrProjectStage::create([
+        'intProject_ID' => $project->intProject_ID,
+        'intSubProject_ID' => $subProject->intSubProject_ID,
+        'intProjectStageNumber' => 1,
+        'txtProjectStageStep' => 'Analysis & Design',
+        'floatProjectStagePlan' => 10,
+        'floatProjectStageActual' => 0,
+        'txtInsertedBy' => $user->txtEmployeeName,
+    ]);
+
+    $plan = MWeeklyPlan::create([
+        'intUser_ID' => $user->intUser_ID,
+        'txtWeekTitle' => 'Week Plan With SubProject Stage',
+        'dtmWeekStartDate' => '2026-09-07',
+        'dtmWeekEndDate' => '2026-09-11',
+        'txtStatus' => 'Draft',
+    ]);
+
+    // 1. Check show view passes projectsLookup with subProjects and stages
+    $showResponse = $this->withSession(['auth_user_id' => $user->intUser_ID])
+        ->get(route('daily-plans.show', $plan));
+    $showResponse->assertStatus(200);
+    $showResponse->assertViewHas('projectsLookup', function ($lookup) use ($project, $subProject, $stage) {
+        $foundPrj = collect($lookup)->firstWhere('id', $project->intProject_ID);
+        if (! $foundPrj) {
+            return false;
+        }
+        $foundSub = collect($foundPrj['subProjects'])->firstWhere('id', $subProject->intSubProject_ID);
+        if (! $foundSub) {
+            return false;
+        }
+        $foundStage = collect($foundSub['stages'])->firstWhere('id', $stage->intProjectStage_ID);
+        return $foundStage !== null;
+    });
+
+    // 2. Add activity with sub project and stage
+    $storeResponse = $this->withSession(['auth_user_id' => $user->intUser_ID])
+        ->post(route('reports.daily-plans.activities.store', $plan), [
+            'txtDayName' => 'Senin',
+            'dtmActivityDate' => '2026-09-07',
+            'txtActivityName' => 'Implement Sub Project Feature',
+            'txtStartTime' => '08:00',
+            'txtEndTime' => '10:00',
+            'floatDuration' => 2.0,
+            'txtLocationType' => 'SENTUL',
+            'intProject_ID' => $project->intProject_ID,
+            'intSubProject_ID' => $subProject->intSubProject_ID,
+            'intProjectStage_ID' => $stage->intProjectStage_ID,
+            'txtRemarks' => 'Testing stage integration',
+        ]);
+
+    $storeResponse->assertRedirect(route('daily-plans.show', $plan));
+    $this->assertDatabaseHas('trDailyPlanActivity', [
+        'txtActivityName' => 'Implement Sub Project Feature',
+        'intProject_ID' => $project->intProject_ID,
+        'intSubProject_ID' => $subProject->intSubProject_ID,
+        'intProjectStage_ID' => $stage->intProjectStage_ID,
+    ]);
+
+    $activity = TrDailyPlanActivity::where('txtActivityName', 'Implement Sub Project Feature')->first();
+    expect($activity->subProject->txtSubProjectName)->toBe('Sub Project Alpha');
+    expect($activity->stage->txtProjectStageStep)->toBe('Analysis & Design');
+
+    // 3. Add another activity WITHOUT sub project and stage (purely optional)
+    $storeWithoutResponse = $this->withSession(['auth_user_id' => $user->intUser_ID])
+        ->post(route('reports.daily-plans.activities.store', $plan), [
+            'txtDayName' => 'Selasa',
+            'dtmActivityDate' => '2026-09-08',
+            'txtActivityName' => 'Standup Meeting Only',
+            'txtStartTime' => '09:00',
+            'txtEndTime' => '10:00',
+            'floatDuration' => 1.0,
+            'intProject_ID' => $project->intProject_ID,
+            'intSubProject_ID' => null,
+            'intProjectStage_ID' => null,
+        ]);
+
+    $storeWithoutResponse->assertRedirect(route('daily-plans.show', $plan));
+    $this->assertDatabaseHas('trDailyPlanActivity', [
+        'txtActivityName' => 'Standup Meeting Only',
+        'intProject_ID' => $project->intProject_ID,
+        'intSubProject_ID' => null,
+        'intProjectStage_ID' => null,
+    ]);
+
+    // 4. Update activity to change / clear sub project & stage
+    $updateResponse = $this->withSession(['auth_user_id' => $user->intUser_ID])
+        ->put(route('reports.daily-plans.activities.update', $activity), [
+            'txtDayName' => 'Senin',
+            'dtmActivityDate' => '2026-09-07',
+            'txtActivityName' => 'Updated Sub Project Feature Activity',
+            'txtStartTime' => '08:30',
+            'txtEndTime' => '11:00',
+            'floatDuration' => 2.5,
+            'intProject_ID' => $project->intProject_ID,
+            'intSubProject_ID' => null,
+            'intProjectStage_ID' => null,
+        ]);
+
+    $updateResponse->assertRedirect(route('daily-plans.show', $plan));
+    $this->assertDatabaseHas('trDailyPlanActivity', [
+        'intDailyPlanActivity_ID' => $activity->intDailyPlanActivity_ID,
+        'txtActivityName' => 'Updated Sub Project Feature Activity',
+        'intSubProject_ID' => null,
+        'intProjectStage_ID' => null,
+    ]);
+});
+
 test('it renders monthly report progress dashboard with interactive charts and tracker', function () {
     $user = MUser::where('txtRole', 'Head')->first();
 

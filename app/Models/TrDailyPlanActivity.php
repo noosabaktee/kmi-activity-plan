@@ -22,6 +22,7 @@ class TrDailyPlanActivity extends Model
         'intUser_ID',
         'intProject_ID',
         'intSubProject_ID',
+        'intProjectStage_ID',
         'txtDayName',
         'dtmActivityDate',
         'txtActivityName',
@@ -60,6 +61,7 @@ class TrDailyPlanActivity extends Model
             'intUser_ID' => 'integer',
             'intProject_ID' => 'integer',
             'intSubProject_ID' => 'integer',
+            'intProjectStage_ID' => 'integer',
             'dtmActivityDate' => 'date',
             'floatDuration' => 'float',
             'bitIsCompleted' => 'boolean',
@@ -85,5 +87,10 @@ class TrDailyPlanActivity extends Model
     public function subProject(): BelongsTo
     {
         return $this->belongsTo(TrSubProject::class, 'intSubProject_ID', 'intSubProject_ID');
+    }
+
+    public function stage(): BelongsTo
+    {
+        return $this->belongsTo(TrProjectStage::class, 'intProjectStage_ID', 'intProjectStage_ID');
     }
 }

@@ -6,6 +6,8 @@ use App\Models\MProject;
 use App\Models\MUser;
 use App\Models\MWeeklyPlan;
 use App\Models\TrDailyPlanActivity;
+use App\Models\TrProjectStage;
+use App\Models\TrSubProject;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -79,7 +81,12 @@ class DailyPlanController extends Controller
             abort(403, 'Unauthorized access to this weekly plan.');
         }
 
-        $dailyPlan->load(['user.subDepartment', 'activities.project']);
+        $dailyPlan->load([
+            'user.subDepartment',
+            'activities.project',
+            'activities.subProject',
+            'activities.stage',
+        ]);
 
         // Group activities by Monday - Friday
         $activitiesByDay = [
@@ -110,14 +117,40 @@ class DailyPlanController extends Controller
         $targetUserId = $dailyPlan->intUser_ID ?: session('auth_user_id');
         $projects = MProject::active()
             ->when($targetUserId, fn($q) => $q->forUser($targetUserId))
+            ->with([
+                'directStages' => fn($q) => $q->orderBy('intProjectStageNumber'),
+                'subProjects' => fn($q) => $q->orderBy('txtSubProjectName'),
+                'subProjects.stages' => fn($q) => $q->orderBy('intProjectStageNumber'),
+            ])
             ->orderBy('txtProjectName')
             ->get();
+
+        $projectsLookup = $projects->map(fn(MProject $p) => [
+            'id' => $p->intProject_ID,
+            'name' => ($p->isAdHoc() ? '[Ad Hoc] ' : '') . $p->txtProjectName,
+            'hasSubProjects' => (bool) $p->bitHasSubProject,
+            'directStages' => $p->directStages->map(fn(TrProjectStage $s) => [
+                'id' => $s->intProjectStage_ID,
+                'step' => $s->txtProjectStageStep,
+                'number' => $s->intProjectStageNumber,
+            ])->values(),
+            'subProjects' => $p->subProjects->map(fn(TrSubProject $sp) => [
+                'id' => $sp->intSubProject_ID,
+                'name' => $sp->txtSubProjectName,
+                'stages' => $sp->stages->map(fn(TrProjectStage $s) => [
+                    'id' => $s->intProjectStage_ID,
+                    'step' => $s->txtProjectStageStep,
+                    'number' => $s->intProjectStageNumber,
+                ])->values(),
+            ])->values(),
+        ])->values();
 
         return view('reports.daily-plan-detail', [
             'dailyPlan' => $dailyPlan,
             'activitiesByDay' => $activitiesByDay,
             'days' => $days,
             'projects' => $projects,
+            'projectsLookup' => $projectsLookup,
             'authUser' => $authUser,
         ]);
     }
@@ -151,12 +184,16 @@ class DailyPlanController extends Controller
             'floatDuration' => ['nullable', 'numeric', 'min:0'],
             'txtLocationType' => ['nullable', 'string', 'max:100'],
             'intProject_ID' => ['nullable', 'integer'],
+            'intSubProject_ID' => ['nullable', 'integer'],
+            'intProjectStage_ID' => ['nullable', 'integer'],
             'txtRemarks' => ['nullable', 'string', 'max:500'],
         ]);
 
         TrDailyPlanActivity::create([
             'intWeeklyPlan_ID' => $dailyPlan->intWeeklyPlan_ID,
             'intProject_ID' => ! empty($validated['intProject_ID']) ? (int) $validated['intProject_ID'] : null,
+            'intSubProject_ID' => ! empty($validated['intSubProject_ID']) ? (int) $validated['intSubProject_ID'] : null,
+            'intProjectStage_ID' => ! empty($validated['intProjectStage_ID']) ? (int) $validated['intProjectStage_ID'] : null,
             'txtDayName' => $validated['txtDayName'],
             'dtmActivityDate' => $validated['dtmActivityDate'] ?? null,
             'txtActivityName' => $validated['txtActivityName'],
@@ -169,6 +206,44 @@ class DailyPlanController extends Controller
         ]);
 
         return redirect()->route('daily-plans.show', $dailyPlan)->with('success', 'Aktivitas berhasil ditambahkan ke hari ' . $validated['txtDayName'] . '.');
+    }
+
+    public function updateActivity(Request $request, TrDailyPlanActivity $activity): RedirectResponse
+    {
+        $authUser = MUser::find(session('auth_user_id'));
+        if ($authUser && ! $authUser->isSuperadmin() && $activity->intUser_ID !== $authUser->intUser_ID) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        $validated = $request->validate([
+            'txtDayName' => ['required', 'string', 'in:Senin,Selasa,Rabu,Kamis,Jumat'],
+            'dtmActivityDate' => ['nullable', 'date'],
+            'txtActivityName' => ['required', 'string', 'max:255'],
+            'txtStartTime' => ['required', 'string', 'max:10'],
+            'txtEndTime' => ['required', 'string', 'max:10'],
+            'floatDuration' => ['nullable', 'numeric', 'min:0'],
+            'txtLocationType' => ['nullable', 'string', 'max:100'],
+            'intProject_ID' => ['nullable', 'integer'],
+            'intSubProject_ID' => ['nullable', 'integer'],
+            'intProjectStage_ID' => ['nullable', 'integer'],
+            'txtRemarks' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $activity->update([
+            'intProject_ID' => ! empty($validated['intProject_ID']) ? (int) $validated['intProject_ID'] : null,
+            'intSubProject_ID' => ! empty($validated['intSubProject_ID']) ? (int) $validated['intSubProject_ID'] : null,
+            'intProjectStage_ID' => ! empty($validated['intProjectStage_ID']) ? (int) $validated['intProjectStage_ID'] : null,
+            'txtDayName' => $validated['txtDayName'],
+            'dtmActivityDate' => $validated['dtmActivityDate'] ?? $activity->dtmActivityDate,
+            'txtActivityName' => $validated['txtActivityName'],
+            'txtStartTime' => $validated['txtStartTime'],
+            'txtEndTime' => $validated['txtEndTime'],
+            'floatDuration' => isset($validated['floatDuration']) ? (float) $validated['floatDuration'] : $activity->floatDuration,
+            'txtLocationType' => $validated['txtLocationType'] ?? null,
+            'txtRemarks' => $validated['txtRemarks'] ?? null,
+        ]);
+
+        return redirect()->route('daily-plans.show', $activity->intWeeklyPlan_ID)->with('success', 'Aktivitas berhasil diperbarui.');
     }
 
     public function destroyActivity(TrDailyPlanActivity $activity): RedirectResponse
